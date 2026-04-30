@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'features/onboarding/presentation/screens/onboarding_screen.dart';
+import 'features/medications/presentation/screens/medication_list_screen.dart'; 
 import 'theme/app_theme.dart';
 
 void main() {
@@ -15,7 +16,7 @@ class NabdApp extends StatelessWidget {
       debugShowCheckedModeBanner: false,
       title: 'Nabd Thermocare',
       theme: AppTheme.lightTheme,
-      home: const OnboardingScreen(),
+      home: const MedicationListScreen(),
     );
   }
 }
