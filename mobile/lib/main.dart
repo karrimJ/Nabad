@@ -30,4 +30,5 @@ class NabdApp extends StatelessWidget {
       home: const AddReadingScreen(),
     );
   }
+  
 }
