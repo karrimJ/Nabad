@@ -9,6 +9,7 @@ import 'features/profile/profile_screen.dart';
 import 'features/profile/edit_profile_screen.dart';
 import 'features/notifications/notifications_screen.dart';
 import 'features/notifications/notifications1_screen.dart';
+import 'features/medicalid/screens/medical_id_screen.dart';
 
 void main() {
   runApp(const NabdApp());
@@ -23,7 +24,7 @@ class NabdApp extends StatelessWidget {
       debugShowCheckedModeBanner: false,
       title: 'Nabd Thermocare',
       theme: AppTheme.lightTheme,
-      home: const NotificationsListScreen(),
+      home: const MedicalIdScreen(),
     );
   }
 }
