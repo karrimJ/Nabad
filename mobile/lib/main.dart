@@ -1,14 +1,13 @@
 import 'package:flutter/material.dart';
-import 'features/onboarding/presentation/screens/onboarding_screen.dart';
-import 'features/medications/presentation/screens/medication_list_screen.dart';
-import 'theme/app_theme.dart';
+import 'package:firebase_core/firebase_core.dart';
 import 'features/medications/presentation/screens/add_medication_screen.dart';
 import 'features/medications/presentation/screens/medication_details_screen.dart';
 import 'features/medications/presentation/screens/edit_medication_screen.dart';
-import 'features/profile/profile_screen.dart';
-import 'features/profile/edit_profile_screen.dart';
-import 'features/notifications/notifications_screen.dart';
-import 'features/notifications/notifications1_screen.dart';
+import 'features/medications/presentation/screens/medication_list_screen.dart';
+import 'features/profile/presentation/screens/profile_screen.dart';
+import 'features/profile/presentation/screens/edit_profile_screen.dart';
+import 'features/notifications/presentation/screens/notifications_screen.dart';
+import 'features/notifications/presentation/screens/notifications1_screen.dart';
 import 'features/medicalid/screens/medical_id_screen.dart';
 import 'features/medicalid/screens/edit_medical_id_screen.dart';
 import 'features/wearables/wearables.dart';
@@ -21,8 +20,12 @@ import 'features/vitals/screens/blood_pressure_details_screen.dart';
 import 'features/vitals/screens/heart_rate_details_screen.dart';
 import 'features/emergencies/emergency.dart';
 import 'features/assistant/assistant.dart';
+import 'theme/app_theme.dart';
 
-void main() {
+void main() async {
+  WidgetsFlutterBinding.ensureInitialized();
+  await Firebase.initializeApp();
+  await NotificationService().init();
   runApp(const NabdApp());
 }
 
@@ -35,7 +38,7 @@ class NabdApp extends StatelessWidget {
       debugShowCheckedModeBanner: false,
       title: 'Nabd Thermocare',
       theme: AppTheme.lightTheme,
-      home: const NabadAssistantScreen(),
+      home: const HomeScreen(),
     );
   }
 }
