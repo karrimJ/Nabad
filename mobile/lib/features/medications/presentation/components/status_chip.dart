@@ -14,15 +14,17 @@ class StatusChip extends StatelessWidget {
 
     switch (label) {
       case "TAKEN":
-        bg = Success.success200;
-        text = Success.success600;
+        bg = const Color(0xFFDFF5E3); // soft green
+        text = const Color(0xFF2E7D32);
         break;
+
       case "UPCOMING":
-        bg = Neutral.neutral300;
+        bg = Neutral.neutral200;
         text = Neutral.neutral600;
         break;
+
       default:
-        bg = Neutral.neutral300;
+        bg = Neutral.neutral200;
         text = Neutral.neutral600;
     }
 
