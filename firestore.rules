@@ -1,0 +1,107 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+
+    function isAuthenticated() {
+      return request.auth != null;
+    }
+
+    function isOwner(uid) {
+      return isAuthenticated() && request.auth.uid == uid;
+    }
+
+    function isAuthorizedContact(uid) {
+      return isAuthenticated() &&
+        exists(/databases/$(database)/documents/users/$(uid)/emergencyContacts/$(request.auth.uid));
+    }
+
+    function medicalSharingEnabled(uid) {
+      return get(/databases/$(database)/documents/users/$(uid)/emergencySettings)
+        .data.shareMedicalIdOnSOS == true;
+    }
+
+    match /chatbotFAQ/{doc} {
+      allow read: if true;
+      allow write: if false;
+    }
+
+    match /services/{doc} {
+      allow read: if true;
+      allow write: if false;
+    }
+
+    match /users/{uid} {
+      allow read, write: if isOwner(uid);
+
+      match /emergencySettings {
+        allow read: if isOwner(uid) || isAuthorizedContact(uid);
+        allow write: if isOwner(uid);
+      }
+
+      match /medicalInfo {
+        allow read: if isOwner(uid) ||
+          (isAuthorizedContact(uid) && medicalSharingEnabled(uid));
+        allow write: if isOwner(uid);
+      }
+
+      match /vitals/{vitalId} {
+        allow read: if isOwner(uid) || isAuthorizedContact(uid);
+        allow write: if isOwner(uid);
+      }
+
+      match /sosLogs/{sosId} {
+        allow read: if isOwner(uid) || isAuthorizedContact(uid);
+        allow write: if isOwner(uid);
+      }
+
+      match /emergencyContacts/{contactId} {
+        allow read, write: if isOwner(uid);
+      }
+
+      match /medications/{medicationId} {
+        allow read, write: if isOwner(uid);
+      }
+
+      match /reminders/{reminderId} {
+        allow read, write: if isOwner(uid);
+      }
+
+      match /notifications/{notificationId} {
+        allow read, write: if isOwner(uid);
+      }
+
+      match /appointments/{appointmentId} {
+        allow read, write: if isOwner(uid);
+      }
+
+      match /iotReadings/{readingId} {
+        allow read, write: if isOwner(uid);
+      }
+
+      match /wearableDevices/{deviceId} {
+        allow read, write: if isOwner(uid);
+
+        match /readings/{readingId} {
+          allow read, write: if isOwner(uid);
+        }
+      }
+
+      match /uploadedFiles/{fileId} {
+        allow read, write: if isOwner(uid);
+      }
+
+      match /{anyCollection}/{anyDoc} {
+        allow read, write: if isOwner(uid);
+      }
+
+      match /{anyCollection}/{anyDoc}/{subCol}/{subDoc} {
+        allow read, write: if isOwner(uid);
+      }
+    }
+
+    match /{document=**} {
+      allow read, write: if false;
+    }
+
+  }
+}
