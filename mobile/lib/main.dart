@@ -19,7 +19,7 @@ import 'features/vitals/screens/glucose_details_screen.dart';
 import 'features/vitals/screens/heart_rate_history_screen.dart';
 import 'features/vitals/screens/blood_pressure_details_screen.dart';
 import 'features/vitals/screens/heart_rate_details_screen.dart';
-
+import 'features/emergencies/emergency.dart';
 void main() {
   runApp(const NabdApp());
 }
@@ -33,7 +33,7 @@ class NabdApp extends StatelessWidget {
       debugShowCheckedModeBanner: false,
       title: 'Nabd Thermocare',
       theme: AppTheme.lightTheme,
-      home: const HeartRateDetailsScreen(),
+      home: const EmergencyScreen(),
     );
   }
 }
