@@ -14,6 +14,7 @@ import 'features/medicalid/screens/edit_medical_id_screen.dart';
 import 'features/wearables/wearables.dart';
 import 'features/vitals/screens/add_manual_reading_screen.dart';
 import 'features/home/home_screen.dart';
+import 'features/vitals/screens/temperature_details_screen.dart';
 
 void main() {
   runApp(const NabdApp());
@@ -28,7 +29,7 @@ class NabdApp extends StatelessWidget {
       debugShowCheckedModeBanner: false,
       title: 'Nabd Thermocare',
       theme: AppTheme.lightTheme,
-      home: const HomeScreen(),
+      home: const TemperatureDetailsScreen(),
     );
   }
 }
