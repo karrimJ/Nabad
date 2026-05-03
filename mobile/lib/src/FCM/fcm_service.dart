@@ -8,6 +8,7 @@ import 'package:flutter_local_notifications/flutter_local_notifications.dart';
 final FlutterLocalNotificationsPlugin flutterLocalNotificationsPlugin =
     FlutterLocalNotificationsPlugin();
 
+
 @pragma('vm:entry-point')
 Future<void> firebaseMessagingBackgroundHandler(RemoteMessage message) async {
   await Firebase.initializeApp();
@@ -15,26 +16,33 @@ Future<void> firebaseMessagingBackgroundHandler(RemoteMessage message) async {
 }
 
 class FCMService {
-  static final GlobalKey<NavigatorState> navigatorKey =
-      GlobalKey<NavigatorState>();
-
   static final FirebaseMessaging _messaging = FirebaseMessaging.instance;
   static final FirebaseFirestore _firestore = FirebaseFirestore.instance;
   static final FirebaseAuth _auth = FirebaseAuth.instance;
 
+  static final GlobalKey<NavigatorState> navigatorKey =
+      GlobalKey<NavigatorState>();
+
+  // ================= INIT =================
   static Future<void> initialize() async {
+    FirebaseMessaging.onBackgroundMessage(firebaseMessagingBackgroundHandler);
+
     await _requestPermissions();
     await _saveToken();
+
     _messaging.onTokenRefresh.listen(_onTokenRefresh);
+
     FirebaseMessaging.onMessage.listen(_onForegroundMessage);
+
     FirebaseMessaging.onMessageOpenedApp.listen(_onNotificationTap);
 
-    RemoteMessage? initialMessage = await _messaging.getInitialMessage();
+    final initialMessage = await _messaging.getInitialMessage();
     if (initialMessage != null) {
       _handleNavigation(initialMessage.data);
     }
   }
 
+  // ================= PERMISSIONS =================
   static Future<void> _requestPermissions() async {
     await _messaging.requestPermission(
       alert: true,
@@ -43,112 +51,108 @@ class FCMService {
     );
   }
 
+  // ================= TOKEN =================
   static Future<void> _saveToken() async {
-    final uid = _auth.currentUser?.uid;
-    if (uid == null) return;
+    final user = _auth.currentUser;
+    if (user == null) return;
 
     final token = await _messaging.getToken();
     if (token == null) return;
 
-    await _firestore.collection('users').doc(uid).update({
+    await _firestore.collection('users').doc(user.uid).set({
       'fcmToken': token,
-      'fcmTokenUpdatedAt': FieldValue.serverTimestamp(),
-    });
+      'updatedAt': FieldValue.serverTimestamp(),
+    }, SetOptions(merge: true));
   }
 
   static Future<void> _onTokenRefresh(String token) async {
-    final uid = _auth.currentUser?.uid;
-    if (uid == null) return;
+    final user = _auth.currentUser;
+    if (user == null) return;
 
-    await _firestore.collection('users').doc(uid).update({
+    await _firestore.collection('users').doc(user.uid).update({
       'fcmToken': token,
-      'fcmTokenUpdatedAt': FieldValue.serverTimestamp(),
+      'updatedAt': FieldValue.serverTimestamp(),
     });
   }
 
+  // ================= FOREGROUND =================
   static Future<void> _onForegroundMessage(RemoteMessage message) async {
     await showLocalNotification(message);
   }
 
+  // ================= TAP =================
   static void _onNotificationTap(RemoteMessage message) {
     _handleNavigation(message.data);
   }
 
+  // ================= NAVIGATION =================
   static void _handleNavigation(Map<String, dynamic> data) {
-    final type = data['type'];
     final context = navigatorKey.currentContext;
     if (context == null) return;
 
+    final type = data['type'];
+
     switch (type) {
-      case 'sos':
-        // Navigator.pushNamed(context, '/sos');
-        break;
-      case 'appointment':
-        // Navigator.pushNamed(context, '/appointments');
-        break;
       case 'medication':
         // Navigator.pushNamed(context, '/medications');
         break;
+      case 'sos':
+        // Navigator.pushNamed(context, '/sos');
+        break;
       default:
-        // Navigator.pushNamed(context, '/notifications');
         break;
     }
   }
 
+  // ================= LOCAL NOTIFICATIONS =================
   static Future<void> initLocalNotifications() async {
     const AndroidInitializationSettings androidSettings =
         AndroidInitializationSettings('@mipmap/ic_launcher');
 
     const DarwinInitializationSettings iosSettings =
-        DarwinInitializationSettings(
-      requestAlertPermission: true,
-      requestBadgePermission: true,
-      requestSoundPermission: true,
-    );
+        DarwinInitializationSettings();
 
-    const InitializationSettings initSettings = InitializationSettings(
+    const InitializationSettings settings = InitializationSettings(
       android: androidSettings,
       iOS: iosSettings,
     );
 
     await flutterLocalNotificationsPlugin.initialize(
-      initSettings,
+      settings: settings, 
       onDidReceiveNotificationResponse: (NotificationResponse response) {
         debugPrint('Notification tapped: ${response.payload}');
       },
     );
 
     const AndroidNotificationChannel channel = AndroidNotificationChannel(
-      'nabd_high_importance',
+      'nabd_channel',
       'Nabd Notifications',
-      description: 'Nabd health and emergency notifications',
+      description: 'Health alerts & reminders',
       importance: Importance.high,
-      playSound: true,
     );
 
-flutterLocalNotificationsPlugin.resolvePlatformSpecificImplementation<AndroidFlutterLocalNotificationsPlugin>()?.createNotificationChannel(channel);
-
+    await flutterLocalNotificationsPlugin
+        .resolvePlatformSpecificImplementation<
+            AndroidFlutterLocalNotificationsPlugin>()
+        ?.createNotificationChannel(channel);
   }
 
+  // ================= SHOW LOCAL =================
   static Future<void> showLocalNotification(RemoteMessage message) async {
     final notification = message.notification;
     if (notification == null) return;
 
     const AndroidNotificationDetails androidDetails =
         AndroidNotificationDetails(
-      'nabd_high_importance',
+      'nabd_channel',
       'Nabd Notifications',
-      channelDescription: 'Nabd health and emergency notifications',
+      channelDescription: 'Health alerts & reminders',
       importance: Importance.high,
       priority: Priority.high,
-      playSound: true,
     );
 
-    const DarwinNotificationDetails iosDetails = DarwinNotificationDetails(
-      presentAlert: true,
-      presentBadge: true,
-      presentSound: true,
-    );
+    const DarwinNotificationDetails iosDetails =
+        DarwinNotificationDetails();
 
     const NotificationDetails details = NotificationDetails(
       android: androidDetails,
@@ -156,18 +160,19 @@ flutterLocalNotificationsPlugin.resolvePlatformSpecificImplementation<AndroidFlu
     );
 
     await flutterLocalNotificationsPlugin.show(
-      notification.hashCode,
-      notification.title,
-      notification.body,
-      details,
+      id: notification.hashCode, 
+      title: notification.title,
+      body: notification.body,
+      notificationDetails: details,
       payload: message.data['type'],
     );
   }
 
+  // ================= DELETE TOKEN =================
   static Future<void> deleteToken() async {
-    final uid = _auth.currentUser?.uid;
-    if (uid != null) {
-      await _firestore.collection('users').doc(uid).update({
+    final user = _auth.currentUser;
+    if (user != null) {
+      await _firestore.collection('users').doc(user.uid).update({
         'fcmToken': FieldValue.delete(),
       });
     }
