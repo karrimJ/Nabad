@@ -1,0 +1,6 @@
+<component name="ProjectRunConfigurationManager">
+  <configuration default="false" name="main.dart" type="FlutterRunConfigurationType" factoryName="Flutter">
+    <option name="filePath" value="$PROJECT_DIR$/mobile/windows/flutter/ephemeral/.plugin_symlinks/firebase_auth/example/lib/main.dart" />
+    <method v="2" />
+  </configuration>
+</component>
