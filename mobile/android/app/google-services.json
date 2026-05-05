@@ -1,0 +1,39 @@
+{
+  "project_info": {
+    "project_number": "328220398396",
+    "project_id": "nabad1",
+    "storage_bucket": "nabad1.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:328220398396:android:894895a8c44572c96cc439",
+        "android_client_info": {
+          "package_name": "com.example.mobile"
+        }
+      },
+      "oauth_client": [
+        {
+          "client_id": "328220398396-a2abtbbsh0n0sb4pclslf0isk157gk5q.apps.googleusercontent.com",
+          "client_type": 3
+        }
+      ],
+      "api_key": [
+        {
+          "current_key": "AIzaSyBusaOPQsignOhW-qR2flvjGky2A_1uSjc"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": [
+            {
+              "client_id": "328220398396-a2abtbbsh0n0sb4pclslf0isk157gk5q.apps.googleusercontent.com",
+              "client_type": 3
+            }
+          ]
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
