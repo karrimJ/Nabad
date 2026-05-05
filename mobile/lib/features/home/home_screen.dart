@@ -2,6 +2,9 @@ import 'dart:math' as math;
 import 'package:flutter/material.dart';
 import 'package:mobile/theme/app_colors.dart';
 import 'package:mobile/theme/app_typography.dart';
+import 'package:mobile/features/services/nearby_services_screen.dart';
+import 'package:mobile/features/assistant/assistant.dart';
+import 'package:mobile/features/appointments/appointment_booking_screen.dart';
 
 class HomeScreen extends StatelessWidget {
   const HomeScreen({super.key});
@@ -14,8 +17,7 @@ class HomeScreen extends StatelessWidget {
         child: Stack(
           children: [
             SingleChildScrollView(
-              padding:
-                  const EdgeInsets.symmetric(horizontal: 20, vertical: 16),
+              padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 16),
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
@@ -30,6 +32,12 @@ class HomeScreen extends StatelessWidget {
                   _vitalsGrid(),
                   const SizedBox(height: 12),
                   _bloodPressureCard(),
+                  const SizedBox(height: 24),
+                  _sectionTitle("Quick Actions"),
+                  const SizedBox(height: 12),
+                  _quickActionsRow(context),
+                  const SizedBox(height: 12),
+                  _appointmentCard(context),
                   const SizedBox(height: 24),
                   _sectionTitle("Today's Medications"),
                   const SizedBox(height: 12),
@@ -249,11 +257,7 @@ class HomeScreen extends StatelessWidget {
       ),
       child: Column(
         children: [
-          const Icon(
-            Icons.monitor_heart,
-            color: VitalRed.vitalRed500,
-            size: 24,
-          ),
+          const Icon(Icons.monitor_heart, color: VitalRed.vitalRed500, size: 24),
           const SizedBox(height: 6),
           Text(
             'Blood Pressure',
@@ -284,6 +288,118 @@ class HomeScreen extends StatelessWidget {
     );
   }
 
+  Widget _quickActionsRow(BuildContext context) {
+    return Row(
+      children: [
+        Expanded(
+          child: _quickActionCard(
+            icon: Icons.local_hospital,
+            label: 'Nearby Services',
+            color: VitalRed.vitalRed500,
+            onTap: () {
+              Navigator.push(
+                context,
+                MaterialPageRoute(
+                    builder: (_) => const NearbyServicesScreen()),
+              );
+            },
+          ),
+        ),
+      ],
+    );
+  }
+
+  Widget _quickActionCard({
+    required IconData icon,
+    required String label,
+    required Color color,
+    required VoidCallback onTap,
+  }) {
+    return GestureDetector(
+      onTap: onTap,
+      child: Container(
+        padding: const EdgeInsets.all(16),
+        decoration: BoxDecoration(
+          color: Neutral.neutral100,
+          borderRadius: BorderRadius.circular(16),
+        ),
+        child: Row(
+          children: [
+            Container(
+              width: 44,
+              height: 44,
+              decoration: BoxDecoration(
+                color: AccentRed.accentRed100,
+                borderRadius: BorderRadius.circular(12),
+              ),
+              child: Icon(icon, color: color, size: 24),
+            ),
+            const SizedBox(width: 12),
+            Expanded(
+              child: Text(
+                label,
+                style: AppTypography.bodyLarge.copyWith(
+                  color: Neutral.neutral900,
+                  fontWeight: FontWeight.w700,
+                ),
+              ),
+            ),
+            const Icon(Icons.arrow_forward_ios,
+                size: 14, color: Neutral.neutral600),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _appointmentCard(BuildContext context) {
+    return GestureDetector(
+      onTap: () {
+        Navigator.push(
+          context,
+          MaterialPageRoute(
+              builder: (_) => const AppointmentBookingScreen()),
+        );
+      },
+      child: Container(
+        padding: const EdgeInsets.all(16),
+        decoration: BoxDecoration(
+          color: Neutral.neutral100,
+          borderRadius: BorderRadius.circular(16),
+        ),
+        child: Row(
+          children: [
+            Container(
+              width: 44,
+              height: 44,
+              decoration: BoxDecoration(
+                color: AccentRed.accentRed100,
+                borderRadius: BorderRadius.circular(12),
+              ),
+              child: const Icon(
+                Icons.calendar_month,
+                color: VitalRed.vitalRed500,
+                size: 24,
+              ),
+            ),
+            const SizedBox(width: 12),
+            Expanded(
+              child: Text(
+                'Book Appointment',
+                style: AppTypography.bodyLarge.copyWith(
+                  color: Neutral.neutral900,
+                  fontWeight: FontWeight.w700,
+                ),
+              ),
+            ),
+            const Icon(Icons.arrow_forward_ios,
+                size: 14, color: Neutral.neutral600),
+          ],
+        ),
+      ),
+    );
+  }
+
   Widget _medicationCard() {
     return Container(
       padding: const EdgeInsets.all(16),
@@ -301,11 +417,8 @@ class HomeScreen extends StatelessWidget {
               color: Neutral.neutral200,
               borderRadius: BorderRadius.circular(10),
             ),
-            child: const Icon(
-              Icons.medication,
-              color: VitalRed.vitalRed500,
-              size: 22,
-            ),
+            child: const Icon(Icons.medication,
+                color: VitalRed.vitalRed500, size: 22),
           ),
           const SizedBox(width: 12),
           Expanded(
@@ -360,19 +473,27 @@ class HomeScreen extends StatelessWidget {
   }
 
   Widget _chatbotButton() {
-    return GestureDetector(
-      onTap: () {},
-      child: Container(
-        width: 60,
-        height: 60,
-        decoration: const BoxDecoration(
-          color: VitalRed.vitalRed500,
-          shape: BoxShape.circle,
-        ),
-        child: const Icon(
-          Icons.chat_bubble_outline,
-          color: Colors.white,
-          size: 28,
+    return Builder(
+      builder: (context) => GestureDetector(
+        onTap: () {
+          Navigator.push(
+            context,
+            MaterialPageRoute(
+                builder: (_) => const NabadAssistantScreen()),
+          );
+        },
+        child: Container(
+          width: 60,
+          height: 60,
+          decoration: const BoxDecoration(
+            color: VitalRed.vitalRed500,
+            shape: BoxShape.circle,
+          ),
+          child: const Icon(
+            Icons.chat_bubble_outline,
+            color: Colors.white,
+            size: 28,
+          ),
         ),
       ),
     );
