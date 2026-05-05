@@ -1,4 +1,5 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:mobile/services/encryption_service.dart';
 
 class MedicationModel {
   final String id;
@@ -31,39 +32,43 @@ class MedicationModel {
     required this.createdAt,
   });
 
-  factory MedicationModel.fromFirestore(DocumentSnapshot doc) {
+  static Future<MedicationModel> fromFirestore(DocumentSnapshot doc) async {
     final data = doc.data() as Map<String, dynamic>;
+    final enc = FieldEncryptionService();
+
     return MedicationModel(
       id: doc.id,
-      medicationName: data['medicationName'] ?? '',
-      dosage: data['dosage'] ?? '',
-      frequency: data['frequency'] ?? '',
-      specificTimes: data['specificTimes'] ?? '',
-      startDate: data['startDate'] ?? '',
-      endDate: data['endDate'] ?? '',
-      instructions: data['instructions'] ?? '',
-      medicineType: data['medicineType'] ?? '',
-      prescribedBy: data['prescribedBy'] ?? '',
-      color: data['color'] ?? '',
+      medicationName: await enc.decrypt(data['medicationName']),
+      dosage:         await enc.decrypt(data['dosage']),
+      instructions:   await enc.decrypt(data['instructions']),
+      prescribedBy:   await enc.decrypt(data['prescribedBy']),
+      frequency:      data['frequency'] ?? '',
+      specificTimes:  data['specificTimes'] ?? '',
+      startDate:      data['startDate'] ?? '',
+      endDate:        data['endDate'] ?? '',
+      medicineType:   data['medicineType'] ?? '',
+      color:          data['color'] ?? '',
       reminderEnabled: data['reminderEnabled'] ?? false,
       createdAt: (data['createdAt'] as Timestamp?)?.toDate() ?? DateTime.now(),
     );
   }
 
-  Map<String, dynamic> toMap() {
+  Future<Map<String, dynamic>> toMap() async {
+    final enc = FieldEncryptionService();
+
     return {
-      'medicationName': medicationName,
-      'dosage': dosage,
-      'frequency': frequency,
-      'specificTimes': specificTimes,
-      'startDate': startDate,
-      'endDate': endDate,
-      'instructions': instructions,
-      'medicineType': medicineType,
-      'prescribedBy': prescribedBy,
-      'color': color,
+      'medicationName': await enc.encrypt(medicationName),
+      'dosage':         await enc.encrypt(dosage),
+      'instructions':   await enc.encrypt(instructions),
+      'prescribedBy':   await enc.encrypt(prescribedBy),
+      'frequency':      frequency,
+      'specificTimes':  specificTimes,
+      'startDate':      startDate,
+      'endDate':        endDate,
+      'medicineType':   medicineType,
+      'color':          color,
       'reminderEnabled': reminderEnabled,
-      'createdAt': FieldValue.serverTimestamp(),
+      'createdAt':      FieldValue.serverTimestamp(),
     };
   }
 }

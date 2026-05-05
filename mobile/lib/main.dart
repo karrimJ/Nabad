@@ -50,7 +50,7 @@ class NabdApp extends StatelessWidget {
       debugShowCheckedModeBanner: false,
       title: 'Nabd Thermocare',
       theme: AppTheme.lightTheme,
-      home: const ConnectWearableScreen(),
+      home: const HomeScreen(),
     );
   }
 }
