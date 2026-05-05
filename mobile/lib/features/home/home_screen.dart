@@ -15,8 +15,7 @@ class HomeScreen extends StatelessWidget {
         child: Stack(
           children: [
             SingleChildScrollView(
-              padding:
-                  const EdgeInsets.symmetric(horizontal: 20, vertical: 16),
+              padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 16),
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
@@ -31,6 +30,12 @@ class HomeScreen extends StatelessWidget {
                   _vitalsGrid(context),
                   const SizedBox(height: 12),
                   _bloodPressureCard(context),
+                  const SizedBox(height: 24),
+                  _sectionTitle("Quick Actions"),
+                  const SizedBox(height: 12),
+                  _quickActionsRow(context),
+                  const SizedBox(height: 12),
+                  _appointmentCard(context),
                   const SizedBox(height: 24),
                   _sectionTitle("Today's Medications"),
                   const SizedBox(height: 12),
