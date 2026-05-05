@@ -31,6 +31,9 @@ void main() async {
   options: DefaultFirebaseOptions.currentPlatform,
 );
  
+ await Firebase.initializeApp(
+  options: DefaultFirebaseOptions.currentPlatform,
+);
 
   await FCMService.initLocalNotifications();
   await FCMService.initialize();
