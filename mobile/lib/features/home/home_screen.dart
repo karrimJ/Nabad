@@ -31,11 +31,7 @@ class HomeScreen extends StatelessWidget {
                   const SizedBox(height: 12),
                   _bloodPressureCard(context),
                   const SizedBox(height: 24),
-                  _sectionTitle("Quick Actions"),
-                  const SizedBox(height: 12),
-                  _quickActionsRow(context),
-                  const SizedBox(height: 12),
-                  _appointmentCard(context),
+                  
                   const SizedBox(height: 24),
                   _sectionTitle("Today's Medications"),
                   const SizedBox(height: 12),

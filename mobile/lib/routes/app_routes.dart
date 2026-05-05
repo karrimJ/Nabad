@@ -51,7 +51,7 @@ class AppRoutes {
   // The route table — Flutter uses this to know what screen to show for each name
   static Map<String, WidgetBuilder> getRoutes() {
     return {
-      home: (context) => const HomeScreen(),
+      
       profile: (context) => const ProfileScreen(),
       editProfile: (context) => const EditProfileScreen(),
       medications: (context) => const MedicationListScreen(),
