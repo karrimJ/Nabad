@@ -5,6 +5,10 @@ import 'package:flutter/material.dart';
 
 class AppColors {
   const AppColors._();
+
+  static Color? get vitalRed500 => null;
+
+  static Color? get neutral100 => null;
 }
 
 /// ---------------------------

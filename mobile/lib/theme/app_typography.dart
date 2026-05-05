@@ -77,4 +77,6 @@ class AppTypography {
     fontSize: 10,
     height: 14 / 10,
   );
+
+  static TextStyle? get titleSmall => null;
 }

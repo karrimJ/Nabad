@@ -21,12 +21,12 @@ import 'features/vitals/screens/heart_rate_details_screen.dart';
 import 'features/emergencies/emergency.dart';
 import 'features/assistant/assistant.dart';
 import 'theme/app_theme.dart';
-import 'src/FCM/fcm_service.dart'; 
+import 'src/FCM/fcm_service.dart';
+import 'features/wearables/connect_wearable_screen.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
   await Firebase.initializeApp();
-
 
   await FCMService.initLocalNotifications();
   await FCMService.initialize();
@@ -43,7 +43,7 @@ class NabdApp extends StatelessWidget {
       debugShowCheckedModeBanner: false,
       title: 'Nabd Thermocare',
       theme: AppTheme.lightTheme,
-      home: const HomeScreen(),
+      home: const ConnectWearableScreen(),
     );
   }
 }
