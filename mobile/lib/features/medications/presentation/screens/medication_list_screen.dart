@@ -37,8 +37,8 @@ class MedicationListScreen extends StatelessWidget {
           ),
         ],
       ),
-      body: StreamBuilder<List<MedicationModel>>(
-        stream: service.getMedications(),
+      body: FutureBuilder<List<MedicationModel>>(
+        future: service.getMedicationList(),
         builder: (context, snapshot) {
           if (snapshot.connectionState == ConnectionState.waiting) {
             return const Center(child: CircularProgressIndicator());

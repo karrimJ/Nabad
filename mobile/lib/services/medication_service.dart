@@ -1,6 +1,6 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
-import '../features/medications/data/medication_model.dart';
+import 'package:mobile/features/medications/data/medication_model.dart';
 
 class MedicationService {
   final _firestore = FirebaseFirestore.instance;
@@ -15,17 +15,18 @@ class MedicationService {
 
   // CREATE
   Future<String> addMedication(MedicationModel med) async {
-    final doc = await _medicationsRef.add(med.toMap());
+    final doc = await _medicationsRef.add(await med.toMap());
     return doc.id;
   }
 
-  // READ ALL (stream so UI auto-updates)
-  Stream<List<MedicationModel>> getMedications() {
-    return _medicationsRef
+  // READ ALL as a future list (fully decrypted)
+  Future<List<MedicationModel>> getMedicationList() async {
+    final snap = await _medicationsRef
         .orderBy('createdAt', descending: true)
-        .snapshots()
-        .map((snap) =>
-            snap.docs.map((d) => MedicationModel.fromFirestore(d)).toList());
+        .get();
+    return Future.wait(
+      snap.docs.map((d) => MedicationModel.fromFirestore(d)),
+    );
   }
 
   // READ ONE
@@ -36,8 +37,8 @@ class MedicationService {
   }
 
   // UPDATE
-  Future<void> updateMedication(String id, Map<String, dynamic> data) async {
-    await _medicationsRef.doc(id).update(data);
+  Future<void> updateMedication(String id, MedicationModel med) async {
+    await _medicationsRef.doc(id).update(await med.toMap());
   }
 
   // DELETE

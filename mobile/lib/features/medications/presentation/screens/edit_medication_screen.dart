@@ -91,13 +91,23 @@ class _EditMedicationScreenState extends State<EditMedicationScreen> {
     setState(() => _isLoading = true);
 
     try {
-      await _medicationService.updateMedication(widget.medication.id, {
-        'medicationName': _nameController.text.trim(),
-        'dosage': _dosageController.text.trim(),
-        'specificTimes': _timeController.text.trim(),
-        'frequency': _selectedFrequency == 0 ? 'Once' : 'Daily',
-        'startDate': _dateController.text.trim(),
-      });
+      final updated = MedicationModel(
+        id: widget.medication.id,
+        medicationName: _nameController.text.trim(),
+        dosage: _dosageController.text.trim(),
+        specificTimes: _timeController.text.trim(),
+        frequency: _selectedFrequency == 0 ? 'Once' : 'Daily',
+        startDate: _dateController.text.trim(),
+        // keep the rest from the original
+        endDate: widget.medication.endDate,
+        instructions: widget.medication.instructions,
+        medicineType: widget.medication.medicineType,
+        prescribedBy: widget.medication.prescribedBy,
+        color: widget.medication.color,
+        reminderEnabled: widget.medication.reminderEnabled,
+        createdAt: widget.medication.createdAt,
+      );
+      await _medicationService.updateMedication(widget.medication.id, updated);
 
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
