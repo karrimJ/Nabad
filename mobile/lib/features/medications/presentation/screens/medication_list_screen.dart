@@ -1,10 +1,12 @@
 import 'package:flutter/material.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
-import 'package:firebase_auth/firebase_auth.dart';
+
 import '../../../../theme/app_colors.dart';
 import '../../../../theme/app_typography.dart';
 import '../../../../services/medication_service.dart';
+
 import '../../data/medication_model.dart';
+
 import 'add_medication_screen.dart';
 import 'medication_details_screen.dart';
 
@@ -17,22 +19,30 @@ class MedicationListScreen extends StatelessWidget {
 
     return Scaffold(
       backgroundColor: Neutral.neutral100,
+
       appBar: AppBar(
         backgroundColor: Neutral.neutral100,
         elevation: 0,
+
         leading: IconButton(
-          icon: const Icon(Icons.arrow_back, color: Colors.black),
+          icon: const Icon(
+            Icons.arrow_back,
+            color: Colors.black,
+          ),
           onPressed: () => Navigator.pop(context),
         ),
+
         title: Text(
           "Medication List",
           style: AppTypography.headingMedium.copyWith(
             color: Neutral.neutral900,
           ),
         ),
+
         actions: [
           Padding(
             padding: const EdgeInsets.only(right: 16),
+
             child: GestureDetector(
               onTap: () {
                 Navigator.push(
@@ -42,24 +52,34 @@ class MedicationListScreen extends StatelessWidget {
                   ),
                 );
               },
+
               child: CircleAvatar(
                 backgroundColor: VitalRed.vitalRed500,
-                child: const Icon(Icons.add, color: Colors.white),
+
+                child: const Icon(
+                  Icons.add,
+                  color: Colors.white,
+                ),
               ),
             ),
           ),
         ],
       ),
-      body: StreamBuilder<QuerySnapshot<Map<String, dynamic>>>(
+
+      body: StreamBuilder<QuerySnapshot>(
         stream: service.getMedicationStream(),
+
         builder: (context, snapshot) {
           if (snapshot.hasError) {
             return Center(
               child: Padding(
                 padding: const EdgeInsets.all(20),
+
                 child: Text(
                   'Error: ${snapshot.error}',
+
                   textAlign: TextAlign.center,
+
                   style: AppTypography.bodyMedium.copyWith(
                     color: VitalRed.vitalRed500,
                   ),
@@ -68,9 +88,10 @@ class MedicationListScreen extends StatelessWidget {
             );
           }
 
-          if (snapshot.connectionState == ConnectionState.waiting &&
-              !snapshot.hasData) {
-            return const Center(child: CircularProgressIndicator());
+          if (snapshot.connectionState == ConnectionState.waiting) {
+            return const Center(
+              child: CircularProgressIndicator(),
+            );
           }
 
           final docs = snapshot.data?.docs ?? [];
@@ -79,28 +100,49 @@ class MedicationListScreen extends StatelessWidget {
             return _emptyState();
           }
 
-          final bool isFromCache = snapshot.data?.metadata.isFromCache ?? false;
+          final bool isFromCache =
+              snapshot.data?.metadata.isFromCache ?? false;
 
           return SingleChildScrollView(
             padding: const EdgeInsets.all(16),
+
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text("All Medications", style: AppTypography.headingMedium),
-                const SizedBox(height: 8),
-                _offlineStatusBanner(isFromCache),
-                const SizedBox(height: 16),
-                ...docs.map((doc) {
-                  final MedicationModel med =
-                      MedicationModel.fromFirestore(doc);
-                  final bool isPending = doc.metadata.hasPendingWrites;
 
-                  return _medicationCard(
-                    context: context,
-                    med: med,
-                    isPending: isPending,
-                  );
-                }),
+              children: [
+                Text(
+                  "All Medications",
+                  style: AppTypography.headingMedium,
+                ),
+
+                const SizedBox(height: 8),
+
+                _offlineStatusBanner(isFromCache),
+
+                const SizedBox(height: 16),
+
+               ...docs.map((doc) {
+  return FutureBuilder<MedicationModel>(
+    future: MedicationModel.fromFirestore(doc),
+
+    builder: (context, medSnapshot) {
+      if (!medSnapshot.hasData) {
+        return const SizedBox();
+      }
+
+      final med = medSnapshot.data!;
+
+      final bool isPending =
+          doc.metadata.hasPendingWrites;
+
+      return _medicationCard(
+        context: context,
+        med: med,
+        isPending: isPending,
+      );
+    },
+  );
+}).toList(),
               ],
             ),
           );
@@ -113,22 +155,29 @@ class MedicationListScreen extends StatelessWidget {
     return Center(
       child: Column(
         mainAxisAlignment: MainAxisAlignment.center,
+
         children: [
           Icon(
             Icons.medication_outlined,
             size: 64,
             color: Neutral.neutral400,
           ),
+
           const SizedBox(height: 16),
+
           Text(
             "No medications yet",
+
             style: AppTypography.bodyLarge.copyWith(
               color: Neutral.neutral500,
             ),
           ),
+
           const SizedBox(height: 8),
+
           Text(
             "Tap + to add your first medication",
+
             style: AppTypography.bodySmall.copyWith(
               color: Neutral.neutral400,
             ),
@@ -141,19 +190,30 @@ class MedicationListScreen extends StatelessWidget {
   Widget _offlineStatusBanner(bool isFromCache) {
     return Container(
       width: double.infinity,
-      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+
+      padding: const EdgeInsets.symmetric(
+        horizontal: 12,
+        vertical: 10,
+      ),
+
       decoration: BoxDecoration(
         color: isFromCache
             ? VitalRed.vitalRed500.withOpacity(0.1)
             : Neutral.neutral200,
+
         borderRadius: BorderRadius.circular(10),
       ),
+
       child: Text(
         isFromCache
             ? 'Offline mode: showing saved medications'
             : 'Online: medications are synced',
+
         style: AppTypography.bodySmall.copyWith(
-          color: isFromCache ? VitalRed.vitalRed500 : Neutral.neutral700,
+          color: isFromCache
+              ? VitalRed.vitalRed500
+              : Neutral.neutral700,
+
           fontWeight: FontWeight.w600,
         ),
       ),
@@ -170,16 +230,22 @@ class MedicationListScreen extends StatelessWidget {
         Navigator.push(
           context,
           MaterialPageRoute(
-            builder: (_) => MedicationDetailsScreen(medication: med),
+            builder: (_) =>
+                MedicationDetailsScreen(medication: med),
           ),
         );
       },
+
       child: Container(
         margin: const EdgeInsets.only(bottom: 16),
+
         padding: const EdgeInsets.all(16),
+
         decoration: BoxDecoration(
           color: Neutral.neutral100,
+
           borderRadius: BorderRadius.circular(16),
+
           boxShadow: [
             BoxShadow(
               color: Colors.black.withOpacity(0.05),
@@ -188,54 +254,72 @@ class MedicationListScreen extends StatelessWidget {
             ),
           ],
         ),
+
         child: Row(
           children: [
-            Container(
+            Image.asset(
+              'assets/images/medication.png',
               width: 40,
               height: 40,
-              decoration: BoxDecoration(
-                color: Neutral.neutral200,
-                borderRadius: BorderRadius.circular(10),
-              ),
-              child: const Icon(Icons.medication, color: Colors.white),
             ),
+
             const SizedBox(width: 12),
+
             Expanded(
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
+
                 children: [
                   Text(
                     med.medicationName,
                     style: AppTypography.headingSmall,
                   ),
+
                   const SizedBox(height: 4),
+
                   Text(
-                    '${med.dosage}${med.specificTimes.isNotEmpty ? ' - ${med.specificTimes}' : ''}',
+                    med.specificTimes.isNotEmpty
+                        ? '${med.dosage} - ${med.specificTimes}'
+                        : med.dosage,
+
                     style: AppTypography.bodySmall,
                   ),
+
                   const SizedBox(height: 6),
+
                   Text(
                     isPending ? 'Pending sync' : 'Synced',
+
                     style: AppTypography.bodySmall.copyWith(
                       color: isPending
                           ? VitalRed.vitalRed500
                           : Neutral.neutral500,
+
                       fontWeight: FontWeight.w600,
                     ),
                   ),
                 ],
               ),
             ),
+
             Container(
-              padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+              padding: const EdgeInsets.symmetric(
+                horizontal: 10,
+                vertical: 6,
+              ),
+
               decoration: BoxDecoration(
                 color: VitalRed.vitalRed500.withOpacity(0.1),
+
                 borderRadius: BorderRadius.circular(8),
               ),
+
               child: Text(
                 med.frequency,
+
                 style: AppTypography.bodySmall.copyWith(
                   color: VitalRed.vitalRed500,
+                  fontWeight: FontWeight.w600,
                 ),
               ),
             ),
