@@ -44,7 +44,7 @@ class AppRoutes {
   static const String heartRateHistory = '/vitals/heart-rate/history';
   static const String bloodPressure = '/vitals/blood-pressure';
   static const String temperature = '/vitals/temperature';
-  static const String oxygen = '/vitakls/Oxygen Level';
+  static const String oxygen = '/vitakls/oxygen';
   static const String glucose = '/vitals/glucose';
   static const String addReading = '/vitals/add-reading';
   static const String emergency = '/emergency';

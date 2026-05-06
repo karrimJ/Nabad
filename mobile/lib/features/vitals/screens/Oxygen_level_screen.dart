@@ -1,10 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 
-// ─────────────────────────────────────────────
-// OXYGEN LEVEL SCREEN
-// ─────────────────────────────────────────────
-
 class OxygenLevelScreen extends StatelessWidget {
   const OxygenLevelScreen({super.key});
 
