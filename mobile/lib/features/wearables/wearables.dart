@@ -1,7 +1,8 @@
 import 'package:flutter/material.dart';
+import 'package:mobile/features/auth/presentation/components/auth_button.dart';
+import 'package:mobile/features/wearables/connect_wearable_screen.dart';
 import 'package:mobile/theme/app_colors.dart';
 import 'package:mobile/theme/app_typography.dart';
-import 'package:mobile/features/auth/presentation/components/auth_button.dart';
 
 class WearablesScreen extends StatelessWidget {
   const WearablesScreen({super.key});
@@ -32,7 +33,7 @@ class WearablesScreen extends StatelessWidget {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            _connectCard(),
+            _connectCard(context),
             const SizedBox(height: 24),
             Text(
               'Supported Data',
@@ -52,7 +53,7 @@ class WearablesScreen extends StatelessWidget {
     );
   }
 
-  Widget _connectCard() {
+  Widget _connectCard(BuildContext context) {
     return Container(
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
@@ -92,7 +93,7 @@ class WearablesScreen extends StatelessWidget {
                     ),
                     const SizedBox(height: 4),
                     Text(
-                      'Connect a device to sync your\nhealth data automaticallt.',
+                      'Connect a device to sync your\nhealth data automatically.',
                       style: AppTypography.bodySmall.copyWith(
                         color: Neutral.neutral700,
                         height: 1.4,
@@ -106,7 +107,14 @@ class WearablesScreen extends StatelessWidget {
           const SizedBox(height: 16),
           AuthButton(
             text: 'Connect Wearable',
-            onPressed: () {},
+            onPressed: () {
+              Navigator.push(
+                context,
+                MaterialPageRoute(
+                  builder: (_) => const ConnectWearableScreen(),
+                ),
+              );
+            },
           ),
         ],
       ),
@@ -187,7 +195,7 @@ class WearablesScreen extends StatelessWidget {
           const SizedBox(width: 12),
           Expanded(
             child: Text(
-              'Wearable data is synced automatically and may not be always 100% accurate. Always consult a healthcare professional for medical decisions.',
+              'Wearable data is synced automatically and may not be always 100% accurate.\nAlways consult a healthcare professional for medical decisions.',
               style: AppTypography.bodyMedium.copyWith(
                 color: Neutral.neutral700,
                 height: 1.5,
