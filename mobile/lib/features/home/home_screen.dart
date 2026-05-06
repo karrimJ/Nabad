@@ -153,7 +153,7 @@ class HomeScreen extends StatelessWidget {
             Expanded(
               child: GestureDetector(
                 onTap: () =>
-                    Navigator.pushNamed(context, AppRoutes.heartRate),
+                    Navigator.pushNamed(context, AppRoutes.oxygen),
                 child: _vitalCard(
                   icon: Icons.air,
                   iconColor: VitalRed.vitalRed500,
