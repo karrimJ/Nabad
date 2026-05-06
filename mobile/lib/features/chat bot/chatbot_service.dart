@@ -1,10 +1,10 @@
 import 'package:google_generative_ai/google_generative_ai.dart';
 
 class ChatbotService {
-  static const String _apiKey = 'AIzaSyBAGVEIHbzN_YL4qZonztA3MCEYF4dZWkM';
+  static const String _apiKey = 'AIzaSyCXxde2XSPLJuq7DFU0-cxp7ylYFk5Te0g';
 
   final GenerativeModel _model = GenerativeModel(
-    model: 'gemini-1.5-flash', // ✅ updated from deprecated 'gemini-pro'
+    model: 'gemini-1.5-flash',
     apiKey: _apiKey,
     systemInstruction: Content.system('''
 You are Nabad, a helpful medical assistant app for Lebanese users.
@@ -24,12 +24,14 @@ Never diagnose — always recommend seeing a doctor for serious concerns.
       final response = await _chat.sendMessage(Content.text(message));
       return response.text ?? 'Sorry, I could not understand that.';
     } catch (e) {
-      return _faqFallback(message);
+      print("CHATBOT ERROR: $e");
+      return 'Error: $e';
     }
   }
 
   String _faqFallback(String message) {
     final msg = message.toLowerCase();
+
     if (msg.contains('emergency') || msg.contains('طوارئ')) {
       return 'For emergencies, please call 140 (Lebanese Red Cross) immediately.';
     } else if (msg.contains('appointment') || msg.contains('موعد')) {
