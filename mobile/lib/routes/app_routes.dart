@@ -23,6 +23,7 @@ import '../features/vitals/screens/glucose_details_screen.dart';
 import '../features/vitals/screens/add_manual_reading_screen.dart';
 import '../features/emergencies/emergency.dart';
 import '../features/assistant/assistant.dart';
+import '../features/vitals/screens/Oxygen_level_screen.dart';
 
 class AppRoutes {
   // Route names — use these as constants instead of typing strings
@@ -43,6 +44,7 @@ class AppRoutes {
   static const String heartRateHistory = '/vitals/heart-rate/history';
   static const String bloodPressure = '/vitals/blood-pressure';
   static const String temperature = '/vitals/temperature';
+  static const String oxygen = '/vitakls/Oxygen Level';
   static const String glucose = '/vitals/glucose';
   static const String addReading = '/vitals/add-reading';
   static const String emergency = '/emergency';
@@ -51,7 +53,6 @@ class AppRoutes {
   // The route table — Flutter uses this to know what screen to show for each name
   static Map<String, WidgetBuilder> getRoutes() {
     return {
-      
       profile: (context) => const ProfileScreen(),
       editProfile: (context) => const EditProfileScreen(),
       medications: (context) => const MedicationListScreen(),
@@ -65,6 +66,7 @@ class AppRoutes {
       heartRate: (context) => const HeartRateDetailsScreen(),
       heartRateHistory: (context) => const HeartRateHistoryScreen(),
       bloodPressure: (context) => const BloodPressureDetailsScreen(),
+      oxygen: (context) => const OxygenLevelScreen(),
       temperature: (context) => const TemperatureDetailsScreen(),
       glucose: (context) => const GlucoseDetailsScreen(),
       addReading: (context) => const AddReadingScreen(),
@@ -72,23 +74,24 @@ class AppRoutes {
       assistant: (context) => const NabadAssistantScreen(),
     };
   }
+
   // Routes that need arguments passed in
-static Route<dynamic>? generateRoute(RouteSettings settings) {
-  switch (settings.name) {
-    case medicationDetails:
-      final medication = settings.arguments as MedicationModel;
-      return MaterialPageRoute(
-        builder: (_) => MedicationDetailsScreen(medication: medication),
-      );
+  static Route<dynamic>? generateRoute(RouteSettings settings) {
+    switch (settings.name) {
+      case medicationDetails:
+        final medication = settings.arguments as MedicationModel;
+        return MaterialPageRoute(
+          builder: (_) => MedicationDetailsScreen(medication: medication),
+        );
 
-    case editMedication:
-      final medication = settings.arguments as MedicationModel;
-      return MaterialPageRoute(
-        builder: (_) => EditMedicationScreen(medication: medication),
-      );
+      case editMedication:
+        final medication = settings.arguments as MedicationModel;
+        return MaterialPageRoute(
+          builder: (_) => EditMedicationScreen(medication: medication),
+        );
 
-    default:
-      return null;
+      default:
+        return null;
+    }
   }
-}
 }
