@@ -1,10 +1,10 @@
 import 'package:google_generative_ai/google_generative_ai.dart';
 
 class ChatbotService {
-  static const String _apiKey = 'AIzaSyBAGVEIHbzN_YL4qZonztA3MCEYF4dZWkM'; // paste your key here
+  static const String _apiKey = 'AIzaSyBAGVEIHbzN_YL4qZonztA3MCEYF4dZWkM';
 
   final GenerativeModel _model = GenerativeModel(
-    model: 'gemini-pro',
+    model: 'gemini-1.5-flash', // ✅ updated from deprecated 'gemini-pro'
     apiKey: _apiKey,
     systemInstruction: Content.system('''
 You are Nabad, a helpful medical assistant app for Lebanese users.
