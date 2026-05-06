@@ -1,31 +1,77 @@
-/**
- * Import function triggers from their respective submodules:
- *
- * const {onCall} = require("firebase-functions/v2/https");
- * const {onDocumentWritten} = require("firebase-functions/v2/firestore");
- *
- * See a full list of supported triggers at https://firebase.google.com/docs/functions
- */
+/* eslint-disable */
 
-const {setGlobalOptions} = require("firebase-functions");
+const { onCall, HttpsError } = require("firebase-functions/v2/https");
+const { defineSecret } = require("firebase-functions/params");
+const { setGlobalOptions } = require("firebase-functions/v2");
+const Groq = require("groq-sdk");
 
+setGlobalOptions({ maxInstances: 10 });
 
-// For cost control, you can set the maximum number of containers that can be
-// running at the same time. This helps mitigate the impact of unexpected
-// traffic spikes by instead downgrading performance. This limit is a
-// per-function limit. You can override the limit for each function using the
-// `maxInstances` option in the function's options, e.g.
-// `onRequest({ maxInstances: 5 }, (req, res) => { ... })`.
-// NOTE: setGlobalOptions does not apply to functions using the v1 API. V1
-// functions should each use functions.runWith({ maxInstances: 10 }) instead.
-// In the v1 API, each function can only serve one request per container, so
-// this will be the maximum concurrent request count.
-setGlobalOptions({maxInstances: 10});
+const groqApiKey = defineSecret("GROQ_API_KEY");
 
-// Create and deploy your first functions
-// https://firebase.google.com/docs/functions/get-started
+exports.nabadAssistant = onCall(
+    {
+        region: "us-central1",
+        secrets: [groqApiKey],
+        timeoutSeconds: 60,
+    },
+    async (request) => {
+        const message = request.data.message;
 
-// exports.helloWorld = onRequest((request, response) => {
-//   logger.info("Hello logs!", {structuredData: true});
-//   response.send("Hello from Firebase!");
-// });
+        if (!message || typeof message !== "string") {
+            throw new HttpsError("invalid-argument", "Message is required.");
+        }
+
+        try {
+            const groq = new Groq({
+                apiKey: groqApiKey.value(),
+            });
+
+            const completion = await groq.chat.completions.create({
+                model: "llama-3.1-8b-instant",
+                messages: [
+                    {
+                        role: "system",
+                        content:
+                            "You are Nabad, a helpful medical assistant app for Lebanese users. " +
+                            "Answer health-related questions in the same language the user writes in. " +
+                            "If the user writes in Arabic, respond in Arabic. " +
+                            "If the user writes in English, respond in English. " +
+                            "Keep answers simple, clear, and helpful. " +
+                            "If the question is not health-related, politely redirect to health topics. " +
+                            "Never diagnose. " +
+                            "Always recommend seeing a doctor for serious symptoms or emergencies. " +
+                            "For emergencies in Lebanon, mention calling 140 Lebanese Red Cross.",
+                    },
+                    {
+                        role: "user",
+                        content: message,
+                    },
+                ],
+                temperature: 0.4,
+                max_tokens: 300,
+            });
+
+            let reply = "Sorry, I could not understand that.";
+
+            if (
+                completion &&
+                completion.choices &&
+                completion.choices.length > 0 &&
+                completion.choices[0].message &&
+                completion.choices[0].message.content
+            ) {
+                reply = completion.choices[0].message.content;
+            }
+
+            return { reply: reply };
+        } catch (error) {
+            console.error("GROQ ERROR:", error);
+
+            throw new HttpsError(
+                "internal",
+                "The assistant is temporarily unavailable. Please try again shortly."
+            );
+        }
+    }
+);

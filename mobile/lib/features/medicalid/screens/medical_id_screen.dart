@@ -1,9 +1,133 @@
 import 'package:flutter/material.dart';
+import 'package:qr_flutter/qr_flutter.dart';
 import 'package:mobile/theme/app_colors.dart';
 import 'package:mobile/theme/app_typography.dart';
+import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:firebase_auth/firebase_auth.dart';
 
-class MedicalIdScreen extends StatelessWidget {
+class MedicalIdScreen extends StatefulWidget {
   const MedicalIdScreen({super.key});
+
+  @override
+  State<MedicalIdScreen> createState() => _MedicalIdScreenState();
+}
+
+class _MedicalIdScreenState extends State<MedicalIdScreen> {
+  @override
+  void initState() {
+    super.initState();
+    _logAccess('viewed_medical_id');
+  }
+
+  Future<void> _logAccess(String action) async {
+    final uid = FirebaseAuth.instance.currentUser?.uid;
+    if (uid == null) return;
+    await FirebaseFirestore.instance.collection('auditLogs').add({
+      'userId': uid,
+      'action': action,
+      'resource': 'medicalInfo',
+      'timestamp': FieldValue.serverTimestamp(),
+    });
+  }
+
+  void _showQRCode(BuildContext context) {
+    _logAccess('viewed_qr_code');
+    const medicalData = '''
+NABAD MEDICAL ID
+----------------
+Name: Karim Jundi
+Age: 20
+Blood Type: AB+
+Allergies: Penicillin
+Conditions: Hypertension
+Medications: Paracetamol, Metformin
+----------------
+EMERGENCY CONTACT
+Name: Sarah (Sister)
+Phone: +961 71 015 648
+----------------
+In emergency, call: 140
+''';
+
+    showDialog(
+      context: context,
+      builder: (ctx) => Dialog(
+        backgroundColor: Neutral.neutral100,
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+        child: Padding(
+          padding: const EdgeInsets.all(24),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Text(
+                'Medical ID QR Code',
+                style: AppTypography.headingSmall.copyWith(
+                  color: Neutral.neutral900,
+                  fontWeight: FontWeight.w700,
+                ),
+              ),
+              const SizedBox(height: 8),
+              Text(
+                'Scan to view emergency medical info',
+                style: AppTypography.bodySmall.copyWith(
+                  color: Neutral.neutral600,
+                ),
+                textAlign: TextAlign.center,
+              ),
+              const SizedBox(height: 20),
+              Container(
+                padding: const EdgeInsets.all(16),
+                decoration: BoxDecoration(
+                  color: Colors.white,
+                  borderRadius: BorderRadius.circular(12),
+                ),
+                child: QrImageView(
+                  data: medicalData,
+                  version: QrVersions.auto,
+                  size: 220,
+                ),
+              ),
+              const SizedBox(height: 16),
+              Container(
+                padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+                decoration: BoxDecoration(
+                  color: AccentRed.accentRed100,
+                  borderRadius: BorderRadius.circular(8),
+                ),
+                child: Text(
+                  '⚠️ For emergency use only',
+                  style: AppTypography.bodySmall.copyWith(
+                    color: VitalRed.vitalRed500,
+                    fontWeight: FontWeight.w600,
+                  ),
+                ),
+              ),
+              const SizedBox(height: 16),
+              GestureDetector(
+                onTap: () => Navigator.pop(ctx),
+                child: Container(
+                  width: double.infinity,
+                  height: 48,
+                  alignment: Alignment.center,
+                  decoration: BoxDecoration(
+                    color: VitalRed.vitalRed500,
+                    borderRadius: BorderRadius.circular(24),
+                  ),
+                  child: Text(
+                    'Close',
+                    style: AppTypography.bodyLarge.copyWith(
+                      color: Colors.white,
+                      fontWeight: FontWeight.w700,
+                    ),
+                  ),
+                ),
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -25,6 +149,13 @@ class MedicalIdScreen extends StatelessWidget {
           ),
         ),
         centerTitle: true,
+        actions: [
+          IconButton(
+            icon: const Icon(Icons.qr_code, color: VitalRed.vitalRed500, size: 28),
+            onPressed: () => _showQRCode(context),
+            tooltip: 'Show QR Code',
+          ),
+        ],
       ),
       body: SingleChildScrollView(
         padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
@@ -54,13 +185,15 @@ class MedicalIdScreen extends StatelessWidget {
             ]),
             const SizedBox(height: 24),
             Text(
-              'This information can be accessed during emergencies to help healthcare providers respond quickly',
+              'This information can be accessed during emergencies to help healthcare providers respond quickly.',
               style: AppTypography.bodyMedium.copyWith(
                 color: Neutral.neutral600,
                 height: 1.5,
               ),
             ),
             const SizedBox(height: 24),
+            _qrButton(context),
+            const SizedBox(height: 12),
             _editButton(context),
             const SizedBox(height: 24),
           ],
@@ -85,11 +218,7 @@ class MedicalIdScreen extends StatelessWidget {
               shape: BoxShape.circle,
               color: Neutral.neutral400,
             ),
-            child: const Icon(
-              Icons.person,
-              size: 44,
-              color: Neutral.neutral600,
-            ),
+            child: const Icon(Icons.person, size: 44, color: Neutral.neutral600),
           ),
           const SizedBox(width: 16),
           Expanded(
@@ -111,7 +240,7 @@ class MedicalIdScreen extends StatelessWidget {
                   ),
                 ),
                 Text(
-                  'Blood Type: AB +',
+                  'Blood Type: AB+',
                   style: AppTypography.bodySmall.copyWith(
                     color: Neutral.neutral700,
                   ),
@@ -126,11 +255,7 @@ class MedicalIdScreen extends StatelessWidget {
               color: VitalRed.vitalRed500,
               borderRadius: BorderRadius.circular(8),
             ),
-            child: const Icon(
-              Icons.medical_services,
-              color: Colors.white,
-              size: 28,
-            ),
+            child: const Icon(Icons.medical_services, color: Colors.white, size: 28),
           ),
         ],
       ),
@@ -165,11 +290,8 @@ class MedicalIdScreen extends StatelessWidget {
       width: double.infinity,
       padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
       child: RichText(
-        textAlign: TextAlign.left,
         text: TextSpan(
-          style: AppTypography.bodyMedium.copyWith(
-            color: Neutral.neutral800,
-          ),
+          style: AppTypography.bodyMedium.copyWith(color: Neutral.neutral800),
           children: [
             TextSpan(
               text: '$label: ',
@@ -192,6 +314,34 @@ class MedicalIdScreen extends StatelessWidget {
       color: Neutral.neutral300,
       indent: 16,
       endIndent: 16,
+    );
+  }
+
+  Widget _qrButton(BuildContext context) {
+    return GestureDetector(
+      onTap: () => _showQRCode(context),
+      child: Container(
+        height: 54,
+        alignment: Alignment.center,
+        decoration: BoxDecoration(
+          color: VitalRed.vitalRed500,
+          borderRadius: BorderRadius.circular(28),
+        ),
+        child: Row(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            const Icon(Icons.qr_code, color: Colors.white, size: 22),
+            const SizedBox(width: 8),
+            Text(
+              'Show Emergency QR Code',
+              style: AppTypography.bodyLarge.copyWith(
+                color: Colors.white,
+                fontWeight: FontWeight.w700,
+              ),
+            ),
+          ],
+        ),
+      ),
     );
   }
 
