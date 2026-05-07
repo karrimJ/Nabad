@@ -63,14 +63,20 @@ class AuthService {
   ///
   /// Throws [AuthException] on failure (invalid email, user-not-found, etc).
   Future<void> sendPasswordResetEmail({required String email}) async {
-    try {
-      await _auth.sendPasswordResetEmail(email: email);
-    } on FirebaseAuthException catch (e) {
-      throw AuthException(_messageFor(e), code: e.code);
-    } catch (e) {
-      throw AuthException('Could not send reset email: $e');
-    }
+  final cleanEmail = email.trim();
+
+  if (cleanEmail.isEmpty) {
+    throw const AuthException('Please enter your email.');
   }
+
+  try {
+    await _auth.sendPasswordResetEmail(email: cleanEmail);
+  } on FirebaseAuthException catch (e) {
+    throw AuthException(_messageFor(e), code: e.code);
+  } catch (e) {
+    throw AuthException('Could not send reset email: $e');
+  }
+}
 
   /// Signs out the currently authenticated user.
   Future<void> signOut() async {
