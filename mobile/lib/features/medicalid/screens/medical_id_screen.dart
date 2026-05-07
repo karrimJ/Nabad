@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:qr_flutter/qr_flutter.dart';
+import 'package:firebase_auth/firebase_auth.dart';
+import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:mobile/theme/app_colors.dart';
 import 'package:mobile/theme/app_typography.dart';
 import '../../../widgets/main_navigation.dart';
@@ -21,7 +23,9 @@ class _MedicalIdScreenState extends State<MedicalIdScreen> {
 
   Future<void> _logAccess(String action) async {
     final uid = FirebaseAuth.instance.currentUser?.uid;
+
     if (uid == null) return;
+
     await FirebaseFirestore.instance.collection('auditLogs').add({
       'userId': uid,
       'action': action,
@@ -32,6 +36,7 @@ class _MedicalIdScreenState extends State<MedicalIdScreen> {
 
   void _showQRCode(BuildContext context) {
     _logAccess('viewed_qr_code');
+
     const medicalData = '''
 NABAD MEDICAL ID
 ----------------
@@ -51,81 +56,90 @@ In emergency, call: 140
 
     showDialog(
       context: context,
-      builder: (ctx) => Dialog(
-        backgroundColor: Neutral.neutral100,
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
-        child: Padding(
-          padding: const EdgeInsets.all(24),
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              Text(
-                'Medical ID QR Code',
-                style: AppTypography.headingSmall.copyWith(
-                  color: Neutral.neutral900,
-                  fontWeight: FontWeight.w700,
-                ),
-              ),
-              const SizedBox(height: 8),
-              Text(
-                'Scan to view emergency medical info',
-                style: AppTypography.bodySmall.copyWith(
-                  color: Neutral.neutral600,
-                ),
-                textAlign: TextAlign.center,
-              ),
-              const SizedBox(height: 20),
-              Container(
-                padding: const EdgeInsets.all(16),
-                decoration: BoxDecoration(
-                  color: Colors.white,
-                  borderRadius: BorderRadius.circular(12),
-                ),
-                child: QrImageView(
-                  data: medicalData,
-                  version: QrVersions.auto,
-                  size: 220,
-                ),
-              ),
-              const SizedBox(height: 16),
-              Container(
-                padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
-                decoration: BoxDecoration(
-                  color: AccentRed.accentRed100,
-                  borderRadius: BorderRadius.circular(8),
-                ),
-                child: Text(
-                  '⚠️ For emergency use only',
-                  style: AppTypography.bodySmall.copyWith(
-                    color: VitalRed.vitalRed500,
-                    fontWeight: FontWeight.w600,
+      builder: (ctx) {
+        return Dialog(
+          backgroundColor: Neutral.neutral100,
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(20),
+          ),
+          child: Padding(
+            padding: const EdgeInsets.all(24),
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Text(
+                  'Medical ID QR Code',
+                  style: AppTypography.headingSmall.copyWith(
+                    color: Neutral.neutral900,
+                    fontWeight: FontWeight.w700,
                   ),
                 ),
-              ),
-              const SizedBox(height: 16),
-              GestureDetector(
-                onTap: () => Navigator.pop(ctx),
-                child: Container(
-                  width: double.infinity,
-                  height: 48,
-                  alignment: Alignment.center,
+                const SizedBox(height: 8),
+                Text(
+                  'Scan to view emergency medical info',
+                  style: AppTypography.bodySmall.copyWith(
+                    color: Neutral.neutral600,
+                  ),
+                  textAlign: TextAlign.center,
+                ),
+                const SizedBox(height: 20),
+                Container(
+                  padding: const EdgeInsets.all(16),
                   decoration: BoxDecoration(
-                    color: VitalRed.vitalRed500,
-                    borderRadius: BorderRadius.circular(24),
+                    color: Colors.white,
+                    borderRadius: BorderRadius.circular(12),
+                  ),
+                  child: QrImageView(
+                    data: medicalData,
+                    version: QrVersions.auto,
+                    size: 220,
+                  ),
+                ),
+                const SizedBox(height: 16),
+                Container(
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 12,
+                    vertical: 8,
+                  ),
+                  decoration: BoxDecoration(
+                    color: AccentRed.accentRed100,
+                    borderRadius: BorderRadius.circular(8),
                   ),
                   child: Text(
-                    'Close',
-                    style: AppTypography.bodyLarge.copyWith(
-                      color: Colors.white,
-                      fontWeight: FontWeight.w700,
+                    '⚠️ For emergency use only',
+                    style: AppTypography.bodySmall.copyWith(
+                      color: VitalRed.vitalRed500,
+                      fontWeight: FontWeight.w600,
                     ),
                   ),
                 ),
-              ),
-            ],
+                const SizedBox(height: 16),
+                GestureDetector(
+                  onTap: () {
+                    Navigator.pop(ctx);
+                  },
+                  child: Container(
+                    width: double.infinity,
+                    height: 48,
+                    alignment: Alignment.center,
+                    decoration: BoxDecoration(
+                      color: VitalRed.vitalRed500,
+                      borderRadius: BorderRadius.circular(24),
+                    ),
+                    child: Text(
+                      'Close',
+                      style: AppTypography.bodyLarge.copyWith(
+                        color: Colors.white,
+                        fontWeight: FontWeight.w700,
+                      ),
+                    ),
+                  ),
+                ),
+              ],
+            ),
           ),
-        ),
-      ),
+        );
+      },
     );
   }
 
@@ -138,14 +152,16 @@ In emergency, call: 140
         elevation: 0,
         scrolledUnderElevation: 0,
         leading: IconButton(
-          icon: const Icon(Icons.arrow_back, color: Neutral.neutral900),
+          icon: const Icon(
+            Icons.arrow_back,
+            color: Neutral.neutral900,
+          ),
           onPressed: () {
-            Navigator.pushAndRemoveUntil(
+            Navigator.pushReplacement(
               context,
               MaterialPageRoute(
                 builder: (_) => const MainNavigation(),
               ),
-              (route) => false,
             );
           },
         ),
@@ -159,14 +175,23 @@ In emergency, call: 140
         centerTitle: true,
         actions: [
           IconButton(
-            icon: const Icon(Icons.qr_code, color: VitalRed.vitalRed500, size: 28),
-            onPressed: () => _showQRCode(context),
+            icon: const Icon(
+              Icons.qr_code,
+              color: VitalRed.vitalRed500,
+              size: 28,
+            ),
+            onPressed: () {
+              _showQRCode(context);
+            },
             tooltip: 'Show QR Code',
           ),
         ],
       ),
       body: SingleChildScrollView(
-        padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
+        padding: const EdgeInsets.symmetric(
+          horizontal: 20,
+          vertical: 12,
+        ),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
@@ -226,7 +251,11 @@ In emergency, call: 140
               shape: BoxShape.circle,
               color: Neutral.neutral400,
             ),
-            child: const Icon(Icons.person, size: 44, color: Neutral.neutral600),
+            child: const Icon(
+              Icons.person,
+              size: 44,
+              color: Neutral.neutral600,
+            ),
           ),
           const SizedBox(width: 16),
           Expanded(
@@ -263,7 +292,11 @@ In emergency, call: 140
               color: VitalRed.vitalRed500,
               borderRadius: BorderRadius.circular(8),
             ),
-            child: const Icon(Icons.medical_services, color: Colors.white, size: 28),
+            child: const Icon(
+              Icons.medical_services,
+              color: Colors.white,
+              size: 28,
+            ),
           ),
         ],
       ),
@@ -296,10 +329,15 @@ In emergency, call: 140
   Widget _infoRow(String label, String value) {
     return Container(
       width: double.infinity,
-      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
+      padding: const EdgeInsets.symmetric(
+        horizontal: 16,
+        vertical: 14,
+      ),
       child: RichText(
         text: TextSpan(
-          style: AppTypography.bodyMedium.copyWith(color: Neutral.neutral800),
+          style: AppTypography.bodyMedium.copyWith(
+            color: Neutral.neutral800,
+          ),
           children: [
             TextSpan(
               text: '$label: ',
@@ -327,7 +365,9 @@ In emergency, call: 140
 
   Widget _qrButton(BuildContext context) {
     return GestureDetector(
-      onTap: () => _showQRCode(context),
+      onTap: () {
+        _showQRCode(context);
+      },
       child: Container(
         height: 54,
         alignment: Alignment.center,
@@ -338,7 +378,11 @@ In emergency, call: 140
         child: Row(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
-            const Icon(Icons.qr_code, color: Colors.white, size: 22),
+            const Icon(
+              Icons.qr_code,
+              color: Colors.white,
+              size: 22,
+            ),
             const SizedBox(width: 8),
             Text(
               'Show Emergency QR Code',
