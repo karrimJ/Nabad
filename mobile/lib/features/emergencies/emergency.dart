@@ -5,6 +5,7 @@ import 'package:url_launcher/url_launcher.dart';
 import 'package:mobile/theme/app_colors.dart';
 import 'package:mobile/theme/app_typography.dart';
 import '../../routes/app_routes.dart';
+import 'package:mobile/widgets/main_navigation.dart';
 
 class EmergencyScreen extends StatefulWidget {
   const EmergencyScreen({super.key});
@@ -261,16 +262,18 @@ class _EmergencyScreenState extends State<EmergencyScreen> {
         scrolledUnderElevation: 0,
         leading: IconButton(
           icon: const Icon(
-            Icons.arrow_back,
-            color: Neutral.neutral900,
-          ),
-          onPressed: () {
-            Navigator.pushNamedAndRemoveUntil(
-              context,
-              AppRoutes.home,
-              (route) => false,
-            );
-          },
+          Icons.arrow_back,
+          color: Neutral.neutral900,
+        ),
+        onPressed: () {
+        Navigator.pushAndRemoveUntil(
+        context,
+        MaterialPageRoute(
+        builder: (_) => const MainNavigation(),
+        ),
+        (route) => false,
+        );
+        },
         ),
         title: Text(
           'Emergency',
