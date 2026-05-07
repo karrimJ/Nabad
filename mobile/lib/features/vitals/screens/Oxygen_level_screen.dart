@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'add_manual_reading_screen.dart';
+import 'package:mobile/routes/app_routes.dart';
 
 class OxygenLevelScreen extends StatelessWidget {
   const OxygenLevelScreen({super.key});
@@ -57,7 +58,6 @@ class OxygenLevelScreen extends StatelessWidget {
                 ],
               ),
             ),
-
             Expanded(
               child: SingleChildScrollView(
                 padding: const EdgeInsets.symmetric(
@@ -144,9 +144,7 @@ class OxygenLevelScreen extends StatelessWidget {
                         ],
                       ),
                     ),
-
                     const SizedBox(height: 28),
-
                     const Text(
                       'Oxygen Level Trend',
                       style: TextStyle(
@@ -164,7 +162,6 @@ class OxygenLevelScreen extends StatelessWidget {
                       ),
                     ),
                     const SizedBox(height: 16),
-
                     Container(
                       padding: const EdgeInsets.symmetric(
                         vertical: 20,
@@ -187,14 +184,10 @@ class OxygenLevelScreen extends StatelessWidget {
                         children: _weeklyData.map((d) => _buildBar(d)).toList(),
                       ),
                     ),
-
                     const SizedBox(height: 8),
-
                     _buildReadingRow('Today (14:00)', '88%'),
                     _buildReadingRow('Today (13:00)', '90%'),
-
                     const SizedBox(height: 20),
-
                     Container(
                       padding: const EdgeInsets.symmetric(
                         horizontal: 16,
@@ -246,9 +239,7 @@ class OxygenLevelScreen extends StatelessWidget {
                         ],
                       ),
                     ),
-
                     const SizedBox(height: 16),
-
                     GestureDetector(
                       onTap: () {
                         Navigator.push(
@@ -289,13 +280,16 @@ class OxygenLevelScreen extends StatelessWidget {
                         ),
                       ),
                     ),
-
                     const SizedBox(height: 16),
-
                     SizedBox(
                       width: double.infinity,
                       child: ElevatedButton(
-                        onPressed: () {},
+                        onPressed: () {
+                          Navigator.pushNamed(
+                            context,
+                            AppRoutes.oxygenHistory,
+                          );
+                        },
                         style: ElevatedButton.styleFrom(
                           backgroundColor: const Color(0xFFCC2222),
                           foregroundColor: Colors.white,
@@ -315,7 +309,6 @@ class OxygenLevelScreen extends StatelessWidget {
                         ),
                       ),
                     ),
-
                     const SizedBox(height: 24),
                   ],
                 ),

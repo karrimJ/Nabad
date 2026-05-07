@@ -1,10 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:mobile/features/auth/presentation/components/auth_button.dart';
-import 'package:mobile/features/wearables/connect_wearable_screen.dart';
 import 'package:mobile/theme/app_colors.dart';
 import 'package:mobile/theme/app_typography.dart';
-import 'package:mobile/features/auth/presentation/components/auth_button.dart';
 import '../../routes/app_routes.dart';
+import '../../widgets/main_navigation.dart';
 
 class WearablesScreen extends StatelessWidget {
   const WearablesScreen({super.key});
@@ -23,10 +22,11 @@ class WearablesScreen extends StatelessWidget {
             color: Neutral.neutral900,
           ),
           onPressed: () {
-            Navigator.pushNamedAndRemoveUntil(
+            Navigator.pushReplacement(
               context,
-              AppRoutes.home,
-              (route) => false,
+              MaterialPageRoute(
+                builder: (_) => const MainNavigation(),
+              ),
             );
           },
         ),

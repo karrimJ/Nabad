@@ -13,8 +13,23 @@ class CaregiverScreen extends StatefulWidget {
 
 class _CaregiverScreenState extends State<CaregiverScreen> {
   final _emailController = TextEditingController();
+  final _phoneController = TextEditingController();
+
   bool _isAdding = false;
-  List<String> _linkedEmails = [];
+  String _selectedRelation = 'Parent';
+
+  final List<String> _relations = [
+    'Parent',
+    'Sibling',
+    'Spouse',
+    'Child',
+    'Friend',
+    'Doctor',
+    'Caregiver',
+    'Other',
+  ];
+
+  List<Map<String, dynamic>> _linkedCaregivers = [];
 
   @override
   void initState() {
@@ -26,43 +41,76 @@ class _CaregiverScreenState extends State<CaregiverScreen> {
     final uid = FirebaseAuth.instance.currentUser?.uid;
     if (uid == null) return;
 
-    final doc = await FirebaseFirestore.instance
-        .collection('users')
-        .doc(uid)
-        .get();
-
+    final doc = await FirebaseFirestore.instance.collection('users').doc(uid).get();
     final data = doc.data();
-    if (data != null && data['linkedAccounts'] != null) {
+
+    if (data == null) return;
+
+    if (data['linkedCaregivers'] != null) {
       setState(() {
-        _linkedEmails = List<String>.from(data['linkedAccounts']);
+        _linkedCaregivers =
+            List<Map<String, dynamic>>.from(data['linkedCaregivers']);
+      });
+    } else if (data['linkedAccounts'] != null) {
+      final oldEmails = List<String>.from(data['linkedAccounts']);
+
+      setState(() {
+        _linkedCaregivers = oldEmails
+            .map(
+              (email) => {
+                'email': email,
+                'phone': '',
+                'relation': 'Caregiver',
+              },
+            )
+            .toList();
       });
     }
   }
 
   Future<void> _addCaregiver() async {
     final email = _emailController.text.trim();
-    if (email.isEmpty) return;
+    final phone = _phoneController.text.trim();
+
+    if (email.isEmpty || phone.isEmpty) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('Please enter caregiver email and phone number'),
+        ),
+      );
+      return;
+    }
 
     setState(() => _isAdding = true);
 
     final uid = FirebaseAuth.instance.currentUser?.uid;
-    if (uid == null) return;
 
-    await FirebaseFirestore.instance
-        .collection('users')
-        .doc(uid)
-        .set({
-      'linkedAccounts': FieldValue.arrayUnion([email]),
+    if (uid == null) {
+      setState(() => _isAdding = false);
+      return;
+    }
+
+    final caregiver = {
+      'email': email,
+      'phone': phone,
+      'relation': _selectedRelation,
+    };
+
+    await FirebaseFirestore.instance.collection('users').doc(uid).set({
+      'linkedCaregivers': FieldValue.arrayUnion([caregiver]),
     }, SetOptions(merge: true));
 
     setState(() {
-      _linkedEmails.add(email);
+      _linkedCaregivers.add(caregiver);
       _isAdding = false;
     });
 
     _emailController.clear();
+    _phoneController.clear();
+    _selectedRelation = 'Parent';
 
     if (!mounted) return;
+
     ScaffoldMessenger.of(context).showSnackBar(
       SnackBar(
         content: Text('$email added as caregiver'),
@@ -71,23 +119,23 @@ class _CaregiverScreenState extends State<CaregiverScreen> {
     );
   }
 
-  Future<void> _removeCaregiver(String email) async {
+  Future<void> _removeCaregiver(Map<String, dynamic> caregiver) async {
     final uid = FirebaseAuth.instance.currentUser?.uid;
     if (uid == null) return;
 
-    await FirebaseFirestore.instance
-        .collection('users')
-        .doc(uid)
-        .update({
-      'linkedAccounts': FieldValue.arrayRemove([email]),
+    await FirebaseFirestore.instance.collection('users').doc(uid).update({
+      'linkedCaregivers': FieldValue.arrayRemove([caregiver]),
     });
 
-    setState(() => _linkedEmails.remove(email));
+    setState(() {
+      _linkedCaregivers.remove(caregiver);
+    });
   }
 
   @override
   void dispose() {
     _emailController.dispose();
+    _phoneController.dispose();
     super.dispose();
   }
 
@@ -138,7 +186,7 @@ class _CaregiverScreenState extends State<CaregiverScreen> {
               ),
             ),
             const SizedBox(height: 12),
-            if (_linkedEmails.isEmpty)
+            if (_linkedCaregivers.isEmpty)
               Container(
                 padding: const EdgeInsets.all(16),
                 decoration: BoxDecoration(
@@ -155,7 +203,9 @@ class _CaregiverScreenState extends State<CaregiverScreen> {
                 ),
               )
             else
-              ..._linkedEmails.map((email) => _caregiverTile(email)),
+              ..._linkedCaregivers.map(
+                (caregiver) => _caregiverTile(caregiver),
+              ),
             const SizedBox(height: 24),
             Text(
               'Live Vitals View',
@@ -181,11 +231,15 @@ class _CaregiverScreenState extends State<CaregiverScreen> {
       ),
       child: Row(
         children: [
-          const Icon(Icons.info_outline, color: VitalRed.vitalRed500, size: 24),
+          const Icon(
+            Icons.info_outline,
+            color: VitalRed.vitalRed500,
+            size: 24,
+          ),
           const SizedBox(width: 12),
           Expanded(
             child: Text(
-              'Add a family member or caregiver by email. They can monitor your vitals in real-time.',
+              'Add a family member or caregiver by email, phone number, and relation. They can monitor your vitals in real-time.',
               style: AppTypography.bodySmall.copyWith(
                 color: VitalRed.vitalRed500,
                 height: 1.5,
@@ -217,8 +271,74 @@ class _CaregiverScreenState extends State<CaregiverScreen> {
               hintStyle: AppTypography.bodyMedium.copyWith(
                 color: Neutral.neutral500,
               ),
-              prefixIcon: const Icon(Icons.email_outlined,
-                  color: Neutral.neutral600),
+              prefixIcon: const Icon(
+                Icons.email_outlined,
+                color: Neutral.neutral600,
+              ),
+              border: OutlineInputBorder(
+                borderRadius: BorderRadius.circular(10),
+                borderSide: BorderSide(color: Neutral.neutral300),
+              ),
+              enabledBorder: OutlineInputBorder(
+                borderRadius: BorderRadius.circular(10),
+                borderSide: BorderSide(color: Neutral.neutral300),
+              ),
+              focusedBorder: OutlineInputBorder(
+                borderRadius: BorderRadius.circular(10),
+                borderSide: BorderSide(color: VitalRed.vitalRed500),
+              ),
+            ),
+          ),
+          const SizedBox(height: 12),
+          TextField(
+            controller: _phoneController,
+            keyboardType: TextInputType.phone,
+            style: AppTypography.bodyMedium.copyWith(
+              color: Neutral.neutral900,
+            ),
+            decoration: InputDecoration(
+              hintText: 'Enter caregiver phone number',
+              hintStyle: AppTypography.bodyMedium.copyWith(
+                color: Neutral.neutral500,
+              ),
+              prefixIcon: const Icon(
+                Icons.phone_outlined,
+                color: Neutral.neutral600,
+              ),
+              border: OutlineInputBorder(
+                borderRadius: BorderRadius.circular(10),
+                borderSide: BorderSide(color: Neutral.neutral300),
+              ),
+              enabledBorder: OutlineInputBorder(
+                borderRadius: BorderRadius.circular(10),
+                borderSide: BorderSide(color: Neutral.neutral300),
+              ),
+              focusedBorder: OutlineInputBorder(
+                borderRadius: BorderRadius.circular(10),
+                borderSide: BorderSide(color: VitalRed.vitalRed500),
+              ),
+            ),
+          ),
+          const SizedBox(height: 12),
+          DropdownButtonFormField<String>(
+            value: _selectedRelation,
+            items: _relations.map((relation) {
+              return DropdownMenuItem<String>(
+                value: relation,
+                child: Text(relation),
+              );
+            }).toList(),
+            onChanged: (value) {
+              if (value == null) return;
+              setState(() {
+                _selectedRelation = value;
+              });
+            },
+            decoration: InputDecoration(
+              prefixIcon: const Icon(
+                Icons.people_outline,
+                color: Neutral.neutral600,
+              ),
               border: OutlineInputBorder(
                 borderRadius: BorderRadius.circular(10),
                 borderSide: BorderSide(color: Neutral.neutral300),
@@ -245,7 +365,9 @@ class _CaregiverScreenState extends State<CaregiverScreen> {
               ),
               child: _isAdding
                   ? const CircularProgressIndicator(
-                      color: Colors.white, strokeWidth: 2)
+                      color: Colors.white,
+                      strokeWidth: 2,
+                    )
                   : Text(
                       'Add Caregiver',
                       style: AppTypography.bodyLarge.copyWith(
@@ -260,7 +382,11 @@ class _CaregiverScreenState extends State<CaregiverScreen> {
     );
   }
 
-  Widget _caregiverTile(String email) {
+  Widget _caregiverTile(Map<String, dynamic> caregiver) {
+    final email = caregiver['email'] ?? '';
+    final phone = caregiver['phone'] ?? '';
+    final relation = caregiver['relation'] ?? 'Caregiver';
+
     return Container(
       margin: const EdgeInsets.only(bottom: 8),
       padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
@@ -281,18 +407,43 @@ class _CaregiverScreenState extends State<CaregiverScreen> {
           ),
           const SizedBox(width: 12),
           Expanded(
-            child: Text(
-              email,
-              style: AppTypography.bodyMedium.copyWith(
-                color: Neutral.neutral900,
-                fontWeight: FontWeight.w600,
-              ),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  relation,
+                  style: AppTypography.bodyMedium.copyWith(
+                    color: Neutral.neutral900,
+                    fontWeight: FontWeight.w700,
+                  ),
+                ),
+                const SizedBox(height: 2),
+                Text(
+                  email,
+                  style: AppTypography.bodySmall.copyWith(
+                    color: Neutral.neutral700,
+                  ),
+                ),
+                if (phone.toString().isNotEmpty) ...[
+                  const SizedBox(height: 2),
+                  Text(
+                    phone,
+                    style: AppTypography.bodySmall.copyWith(
+                      color: Neutral.neutral700,
+                    ),
+                  ),
+                ],
+              ],
             ),
           ),
           IconButton(
-            icon: const Icon(Icons.remove_circle_outline,
-                color: VitalRed.vitalRed500),
-            onPressed: () => _removeCaregiver(email),
+            icon: const Icon(
+              Icons.remove_circle_outline,
+              color: VitalRed.vitalRed500,
+            ),
+            onPressed: () {
+              _removeCaregiver(caregiver);
+            },
           ),
         ],
       ),
@@ -300,17 +451,16 @@ class _CaregiverScreenState extends State<CaregiverScreen> {
   }
 
   Widget _liveVitalsCard(String uid) {
-    return StreamBuilder<DocumentSnapshot>(
+    return StreamBuilder<QuerySnapshot>(
       stream: FirebaseFirestore.instance
           .collection('users')
           .doc(uid)
           .collection('iotReadings')
           .orderBy('timestamp', descending: true)
           .limit(1)
-          .snapshots()
-          .map((snap) => snap.docs.first),
+          .snapshots(),
       builder: (context, snapshot) {
-        if (!snapshot.hasData) {
+        if (!snapshot.hasData || snapshot.data!.docs.isEmpty) {
           return Container(
             padding: const EdgeInsets.all(16),
             decoration: BoxDecoration(
@@ -329,7 +479,7 @@ class _CaregiverScreenState extends State<CaregiverScreen> {
           );
         }
 
-        final data = snapshot.data!.data() as Map<String, dynamic>;
+        final data = snapshot.data!.docs.first.data() as Map<String, dynamic>;
 
         return Container(
           padding: const EdgeInsets.all(16),
@@ -358,8 +508,10 @@ class _CaregiverScreenState extends State<CaregiverScreen> {
               _vitalRow('🌡️ Temperature', '${data['temperature'] ?? '--'}°C'),
               _vitalRow('💧 SpO₂', '${data['oxygenLevel'] ?? '--'}%'),
               _vitalRow('👟 Steps', '${data['steps'] ?? '--'}'),
-              _vitalRow('🩺 Blood Pressure',
-                  '${data['systolic'] ?? '--'}/${data['diastolic'] ?? '--'}'),
+              _vitalRow(
+                '🩺 Blood Pressure',
+                '${data['systolic'] ?? '--'}/${data['diastolic'] ?? '--'}',
+              ),
             ],
           ),
         );

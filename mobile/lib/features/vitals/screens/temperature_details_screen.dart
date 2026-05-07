@@ -3,6 +3,7 @@ import 'package:mobile/theme/app_colors.dart';
 import 'package:mobile/theme/app_typography.dart';
 import 'package:mobile/features/auth/presentation/components/auth_button.dart';
 import 'add_manual_reading_screen.dart';
+import 'package:mobile/routes/app_routes.dart';
 
 class TemperatureDetailsScreen extends StatefulWidget {
   const TemperatureDetailsScreen({super.key});
@@ -62,7 +63,9 @@ class _TemperatureDetailsScreenState extends State<TemperatureDetailsScreen> {
             const SizedBox(height: 16),
             _addReadingButton(),
             const SizedBox(height: 12),
-            AuthButton(text: 'View History', onPressed: () {}),
+            AuthButton(text: 'View History', onPressed: () {
+              Navigator.pushNamed(context, AppRoutes.temperatureHistory);
+            }),
             const SizedBox(height: 24),
           ],
         ),
