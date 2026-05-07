@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import '../components/onboarding_page.dart';
 import '../components/onboarding_content.dart';
+import '../../../auth/presentation/screens/register_screen.dart';
 
 class OnboardingScreen extends StatefulWidget {
   const OnboardingScreen({super.key});
@@ -20,7 +21,10 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
         curve: Curves.easeInOut,
       );
     } else {
-      // TODO: Navigate to Login
+      Navigator.pushReplacement(
+        context,
+        MaterialPageRoute(builder: (_) => const RegisterScreen()),
+      );
     }
   }
 
@@ -35,7 +39,6 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
           });
         },
         children: [
-
           /// PAGE 1
           OnboardingPage(
             image: "assets/images/onboarding1.png",

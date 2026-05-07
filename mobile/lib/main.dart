@@ -5,6 +5,7 @@ import 'theme/app_theme.dart';
 import 'src/FCM/fcm_service.dart';
 import 'routes/app_routes.dart';
 import 'widgets/main_navigation.dart';
+import 'features/onboarding/presentation/screens/onboarding_screen.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -25,7 +26,7 @@ class NabdApp extends StatelessWidget {
       debugShowCheckedModeBanner: false,
       title: 'Nabd Thermocare',
       theme: AppTheme.lightTheme,
-      home: const MainNavigation(),
+      home: const OnboardingScreen(),
       routes: AppRoutes.getRoutes(),
       onGenerateRoute: AppRoutes.generateRoute,
     );

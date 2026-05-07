@@ -4,6 +4,8 @@ import 'package:mobile/theme/app_colors.dart';
 import 'package:mobile/theme/app_typography.dart';
 import '../../../widgets/main_navigation.dart';
 import 'edit_medical_id_screen.dart';
+import 'package:firebase_auth/firebase_auth.dart';
+import 'package:cloud_firestore/cloud_firestore.dart';
 
 class MedicalIdScreen extends StatefulWidget {
   const MedicalIdScreen({super.key});
