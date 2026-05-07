@@ -14,6 +14,7 @@ class NotificationService {
   Future<void> init() async {
     if (kIsWeb) return;
     tz_data.initializeTimeZones();
+    tz.setLocalLocation(tz.getLocation('Asia/Beirut'));
     const android = AndroidInitializationSettings('@mipmap/ic_launcher');
     const ios = DarwinInitializationSettings(
       requestAlertPermission: true,
@@ -33,6 +34,10 @@ class NotificationService {
     required int minute,
   }) async {
     if (kIsWeb) return;
+
+    tz_data.initializeTimeZones();
+    tz.setLocalLocation(tz.getLocation('Asia/Beirut'));
+
     await _plugin.zonedSchedule(
       id: id,
       title: 'Time to take your medication 💊',
@@ -64,9 +69,11 @@ class NotificationService {
   }
 
   tz.TZDateTime nextInstanceOfTime(int hour, int minute) {
-    final now = tz.TZDateTime.now(tz.local);
+    tz_data.initializeTimeZones();
+    final location = tz.getLocation('Asia/Beirut');
+    final now = tz.TZDateTime.now(location);
     var scheduled = tz.TZDateTime(
-        tz.local, now.year, now.month, now.day, hour, minute);
+        location, now.year, now.month, now.day, hour, minute);
     if (scheduled.isBefore(now)) {
       scheduled = scheduled.add(const Duration(days: 1));
     }
