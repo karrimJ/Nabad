@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:firebase_auth/firebase_auth.dart';
+<<<<<<< HEAD
 
 import 'package:mobile/theme/app_colors.dart';
 import 'package:mobile/theme/app_typography.dart';
@@ -7,12 +8,18 @@ import 'package:mobile/features/caregiver/caregiver_screen.dart';
 
 import '../../routes/app_routes.dart';
 import '../../widgets/main_navigation.dart';
+=======
+import 'package:mobile/theme/app_colors.dart';
+import 'package:mobile/theme/app_typography.dart';
+import 'package:mobile/routes/app_routes.dart';
+>>>>>>> cfa1829 (bbb)
 import 'package:mobile/widgets/main_navigation.dart';
-import 'package:mobile/features/caregiver/caregiver_screen.dart';
+
 class ProfileScreen extends StatelessWidget {
   const ProfileScreen({super.key});
 
   Future<void> _logout(BuildContext context) async {
+<<<<<<< HEAD
     try {
       await AuthService().signOut();
       if (!context.mounted) return;
@@ -30,12 +37,40 @@ class ProfileScreen extends StatelessWidget {
         ),
       );
     }
+=======
+    await FirebaseAuth.instance.signOut();
+
+    if (!context.mounted) return;
+
+    Navigator.pushNamedAndRemoveUntil(
+      context,
+      AppRoutes.login,
+      (route) => false,
+    );
+  }
+
+  void _goToHome(BuildContext context) {
+    Navigator.pushAndRemoveUntil(
+      context,
+      MaterialPageRoute(
+        builder: (_) => const MainNavigation(),
+      ),
+      (route) => false,
+    );
+>>>>>>> cfa1829 (bbb)
   }
 
   @override
   Widget build(BuildContext context) {
+<<<<<<< HEAD
     final profileService = UserProfileService();
     final fallbackEmail = FirebaseAuth.instance.currentUser?.email ?? '';
+=======
+    final user = FirebaseAuth.instance.currentUser;
+
+    final displayName = user?.displayName;
+    final email = user?.email;
+>>>>>>> cfa1829 (bbb)
 
     return Scaffold(
       backgroundColor: Neutral.neutral300,
@@ -59,6 +94,7 @@ class ProfileScreen extends StatelessWidget {
                 ),
               ),
               const SizedBox(height: 16),
+<<<<<<< HEAD
 
               // ── Live name + email from Firestore / FirebaseAuth ──────
               StreamBuilder<UserProfileModel?>(
@@ -95,6 +131,23 @@ class ProfileScreen extends StatelessWidget {
                     ],
                   );
                 },
+=======
+              Text(
+                displayName == null || displayName.isEmpty
+                    ? 'Nabad User'
+                    : displayName,
+                style: AppTypography.headingMedium.copyWith(
+                  color: Neutral.neutral900,
+                  fontWeight: FontWeight.w700,
+                ),
+              ),
+              const SizedBox(height: 4),
+              Text(
+                email ?? 'No email available',
+                style: AppTypography.bodyMedium.copyWith(
+                  color: Neutral.neutral600,
+                ),
+>>>>>>> cfa1829 (bbb)
               ),
 
               const SizedBox(height: 32),
@@ -110,13 +163,7 @@ class ProfileScreen extends StatelessWidget {
                 icon: Icons.list_alt_outlined,
                 label: 'My Vitals',
                 onTap: () {
-              Navigator.pushAndRemoveUntil(
-                context,
-              MaterialPageRoute(
-                builder: (_) => const MainNavigation(),
-              ),
-                (route) => false,
-              );
+                  _goToHome(context);
                 },
               ),
               const SizedBox(height: 12),
@@ -128,21 +175,14 @@ class ProfileScreen extends StatelessWidget {
                 },
               ),
               const SizedBox(height: 12),
-              _menuItem(
-                icon: Icons.family_restroom,
-                label: 'Family & Caregiver',
-                onTap: () {
-                  Navigator.push(
-                    context,
-                    MaterialPageRoute(
-                      builder: (_) => const CaregiverScreen(),
-                    ),
-                  );
-                },
-              ),
-              const SizedBox(height: 12),
               _logoutItem(
+<<<<<<< HEAD
                 onTap: () => _logout(context),
+=======
+                onTap: () {
+                  _logout(context);
+                },
+>>>>>>> cfa1829 (bbb)
               ),
             ],
           ),
@@ -199,7 +239,11 @@ class ProfileScreen extends StatelessWidget {
         ),
         child: Row(
           children: [
-            const Icon(Icons.logout, color: VitalRed.vitalRed500, size: 22),
+            const Icon(
+              Icons.logout,
+              color: VitalRed.vitalRed500,
+              size: 22,
+            ),
             const SizedBox(width: 12),
             Text(
               'Log Out',
