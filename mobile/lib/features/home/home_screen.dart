@@ -1,5 +1,6 @@
 import 'dart:math' as math;
 import 'package:flutter/material.dart';
+import 'package:firebase_auth/firebase_auth.dart';
 import 'package:mobile/theme/app_colors.dart';
 import 'package:mobile/theme/app_typography.dart';
 import 'package:mobile/routes/app_routes.dart';
@@ -22,45 +23,29 @@ class HomeScreen extends StatelessWidget {
           children: [
             SingleChildScrollView(
               padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 16),
-
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
-
                 children: [
                   const SizedBox(height: 8),
                   _greetingCard(),
-
                   const SizedBox(height: 24),
-
                   _sectionTitle("Today's Progress"),
-
                   const SizedBox(height: 16),
-
                   Center(child: _progressCircle(78)),
-
                   const SizedBox(height: 32),
-
                   _sectionTitle("Today's Vitals"),
-
                   const SizedBox(height: 12),
-
                   _vitalsGrid(context),
-
                   const SizedBox(height: 12),
-
                   _bloodPressureCard(context),
-
                   const SizedBox(height: 24),
                   _sectionTitle("Today's Medications"),
                   const SizedBox(height: 12),
-
                   _medicationCard(context),
-
                   const SizedBox(height: 80),
                 ],
               ),
             ),
-
             Positioned(
               right: 16,
               top: 12,
@@ -106,7 +91,6 @@ class HomeScreen extends StatelessWidget {
               ),
             ),
             const SizedBox(height: 24),
-
             ListTile(
               leading: const Icon(Icons.person),
               title: const Text('My Profile'),
@@ -114,7 +98,6 @@ class HomeScreen extends StatelessWidget {
                 _goTo(context, AppRoutes.profile);
               },
             ),
-
             ExpansionTile(
               leading: const Icon(Icons.history),
               title: const Text('Vital History'),
@@ -157,7 +140,6 @@ class HomeScreen extends StatelessWidget {
                 ),
               ],
             ),
-
             ListTile(
               leading: const Icon(Icons.medication),
               title: const Text('Medications'),
@@ -165,7 +147,6 @@ class HomeScreen extends StatelessWidget {
                 _goTo(context, AppRoutes.medications);
               },
             ),
-
             ListTile(
               leading: const Icon(Icons.watch),
               title: const Text('Wearables'),
@@ -173,7 +154,6 @@ class HomeScreen extends StatelessWidget {
                 _goTo(context, AppRoutes.wearables);
               },
             ),
-
             ListTile(
               leading: const Icon(Icons.emergency, color: Colors.red),
               title: const Text(
@@ -191,38 +171,34 @@ class HomeScreen extends StatelessWidget {
   }
 
   Widget _greetingCard() {
+    final user = FirebaseAuth.instance.currentUser;
+    final name = user?.displayName?.isNotEmpty == true
+        ? user!.displayName!.split(' ').first
+        : user?.email?.split('@').first ?? 'there';
+
     return Container(
       width: double.infinity,
-
       padding: const EdgeInsets.all(16),
-
       decoration: BoxDecoration(
         color: Neutral.neutral100,
-
         borderRadius: BorderRadius.circular(16),
       ),
-
       child: Row(
         children: [
           Expanded(
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
-
               children: [
                 Text(
-                  'Hi Karim! 👋',
-
+                  'Hi $name! 👋',
                   style: AppTypography.headingMedium.copyWith(
                     color: Neutral.neutral900,
                     fontWeight: FontWeight.w700,
                   ),
                 ),
-
                 const SizedBox(height: 4),
-
                 Text(
                   "Here's your health summary for today.",
-
                   style: AppTypography.bodyMedium.copyWith(
                     color: Neutral.neutral700,
                   ),
@@ -238,7 +214,6 @@ class HomeScreen extends StatelessWidget {
   Widget _sectionTitle(String title) {
     return Text(
       title,
-
       style: AppTypography.headingSmall.copyWith(
         color: Neutral.neutral900,
         fontWeight: FontWeight.w700,
@@ -250,36 +225,27 @@ class HomeScreen extends StatelessWidget {
     return SizedBox(
       width: 180,
       height: 180,
-
       child: Stack(
         alignment: Alignment.center,
-
         children: [
           SizedBox(
             width: 180,
             height: 180,
-
             child: CustomPaint(painter: _ProgressPainter(percent / 100)),
           ),
-
           Column(
             mainAxisSize: MainAxisSize.min,
-
             children: [
               Text(
                 '$percent%',
-
                 style: AppTypography.headingLarge.copyWith(
                   color: VitalRed.vitalRed500,
                   fontWeight: FontWeight.w800,
                 ),
               ),
-
               const SizedBox(height: 4),
-
               Text(
                 'of goals reached',
-
                 style: AppTypography.bodySmall.copyWith(
                   color: Neutral.neutral700,
                 ),
@@ -301,41 +267,31 @@ class HomeScreen extends StatelessWidget {
                 onTap: () => Navigator.pushNamed(context, AppRoutes.heartRate),
                 child: _vitalCard(
                   image: 'assets/images/heart.png',
-
                   title: 'Heart Rate',
                   value: '78 bpm',
                   status: 'NORMAL',
-
                   statusColor: Success.success500,
-
                   background: Neutral.neutral100,
                 ),
               ),
             ),
-
             const SizedBox(width: 12),
-
             Expanded(
               child: GestureDetector(
                 onTap: () => Navigator.pushNamed(context, AppRoutes.oxygen),
                 child: _vitalCard(
                   image: 'assets/images/lungs.png',
-
                   title: 'Oxygen Level',
                   value: '88%',
                   status: 'CRITICAL',
-
                   statusColor: VitalRed.vitalRed500,
-
                   background: AccentRed.accentRed100,
                 ),
               ),
             ),
           ],
         ),
-
         const SizedBox(height: 12),
-
         Row(
           children: [
             Expanded(
@@ -344,34 +300,25 @@ class HomeScreen extends StatelessWidget {
                     Navigator.pushNamed(context, AppRoutes.temperature),
                 child: _vitalCard(
                   image: 'assets/images/temperature.png',
-
                   title: 'Temperature',
                   value: '36.8 °C',
                   status: 'STABLE',
-
                   statusColor: Success.success500,
-
                   background: Neutral.neutral100,
                 ),
               ),
             ),
-
             const SizedBox(width: 12),
-
             Expanded(
               child: GestureDetector(
                 onTap: () => Navigator.pushNamed(context, AppRoutes.glucose),
                 child: _vitalCard(
                   image: 'assets/images/glucose.png',
-
                   title: 'Glucose Level',
                   value: '--',
                   status: 'PENDING',
-
                   statusColor: Neutral.neutral600,
-
                   background: Neutral.neutral400,
-
                   valueColor: Neutral.neutral600,
                 ),
               ),
@@ -393,49 +340,34 @@ class HomeScreen extends StatelessWidget {
   }) {
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 18),
-
       decoration: BoxDecoration(
         color: background,
-
         borderRadius: BorderRadius.circular(18),
       ),
-
       child: Column(
         mainAxisAlignment: MainAxisAlignment.center,
-
         children: [
           Image.asset(image, width: 26, height: 26, fit: BoxFit.contain),
-
           const SizedBox(height: 10),
-
           Text(
             title,
-
             style: AppTypography.bodyMedium.copyWith(
               color: Neutral.neutral900,
               fontWeight: FontWeight.w600,
             ),
-
             textAlign: TextAlign.center,
           ),
-
           const SizedBox(height: 6),
-
           Text(
             value,
-
             style: AppTypography.headingSmall.copyWith(
               color: valueColor ?? VitalRed.vitalRed500,
-
               fontWeight: FontWeight.w800,
             ),
           ),
-
           const SizedBox(height: 4),
-
           Text(
             status,
-
             style: AppTypography.bodySmall.copyWith(
               color: statusColor,
               fontWeight: FontWeight.w700,
@@ -452,18 +384,13 @@ class HomeScreen extends StatelessWidget {
       onTap: () {
         Navigator.pushNamed(context, AppRoutes.bloodPressure);
       },
-
       child: Container(
         width: double.infinity,
-
         padding: const EdgeInsets.all(18),
-
         decoration: BoxDecoration(
           color: const Color(0xFFFFF1DC),
-
           borderRadius: BorderRadius.circular(18),
         ),
-
         child: Column(
           children: [
             Image.asset(
@@ -471,34 +398,25 @@ class HomeScreen extends StatelessWidget {
               width: 32,
               height: 32,
             ),
-
             const SizedBox(height: 8),
-
             Text(
               'Blood Pressure',
-
               style: AppTypography.bodyLarge.copyWith(
                 color: Neutral.neutral900,
                 fontWeight: FontWeight.w600,
               ),
             ),
-
             const SizedBox(height: 6),
-
             Text(
               '142/88 mmHg',
-
               style: AppTypography.headingMedium.copyWith(
                 color: const Color(0xFFE19831),
                 fontWeight: FontWeight.w800,
               ),
             ),
-
             const SizedBox(height: 4),
-
             Text(
               'HIGH',
-
               style: AppTypography.bodySmall.copyWith(
                 color: const Color(0xFFE19831),
                 fontWeight: FontWeight.w700,
@@ -515,61 +433,44 @@ class HomeScreen extends StatelessWidget {
       onTap: () {
         Navigator.pushNamed(context, AppRoutes.medications);
       },
-
       child: Container(
         padding: const EdgeInsets.all(16),
-
         decoration: BoxDecoration(
           color: Neutral.neutral100,
-
           borderRadius: BorderRadius.circular(16),
         ),
-
         child: Row(
           crossAxisAlignment: CrossAxisAlignment.start,
-
           children: [
             Image.asset('assets/images/medication.png', width: 42, height: 42),
-
             const SizedBox(width: 12),
-
             Expanded(
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
-
                 children: [
                   Text(
                     'Paracetamol',
-
                     style: AppTypography.bodyLarge.copyWith(
                       color: Neutral.neutral900,
                       fontWeight: FontWeight.w700,
                     ),
                   ),
-
                   const SizedBox(height: 2),
-
                   Text(
                     'Next dose at 08:00 AM',
-
                     style: AppTypography.bodySmall.copyWith(
                       color: Neutral.neutral700,
                     ),
                   ),
-
                   const SizedBox(height: 8),
-
                   Text(
                     'In 2h 15m',
-
                     style: AppTypography.headingSmall.copyWith(
                       color: VitalRed.vitalRed500,
                       fontWeight: FontWeight.w800,
                     ),
                   ),
-
                   const SizedBox(height: 8),
-
                   Container(
                     padding: const EdgeInsets.symmetric(
                       horizontal: 10,
@@ -577,13 +478,10 @@ class HomeScreen extends StatelessWidget {
                     ),
                     decoration: BoxDecoration(
                       color: Success.success100,
-
                       borderRadius: BorderRadius.circular(20),
                     ),
-
                     child: Text(
                       'TAKEN',
-
                       style: AppTypography.bodySmall.copyWith(
                         color: Success.success500,
                         fontWeight: FontWeight.w700,
@@ -604,16 +502,13 @@ class HomeScreen extends StatelessWidget {
       onTap: () {
         Navigator.pushNamed(context, AppRoutes.assistant);
       },
-
       child: Container(
         width: 60,
         height: 60,
-
         decoration: const BoxDecoration(
           color: VitalRed.vitalRed500,
           shape: BoxShape.circle,
         ),
-
         child: ClipOval(
           child: Image.asset(
             'assets/images/robot.png',
@@ -629,13 +524,11 @@ class HomeScreen extends StatelessWidget {
 
 class _ProgressPainter extends CustomPainter {
   final double progress;
-
   _ProgressPainter(this.progress);
 
   @override
   void paint(Canvas canvas, Size size) {
     final center = Offset(size.width / 2, size.height / 2);
-
     final radius = size.width / 2 - 12;
 
     final bgPaint = Paint()
@@ -654,7 +547,6 @@ class _ProgressPainter extends CustomPainter {
 
     canvas.drawArc(
       Rect.fromCircle(center: center, radius: radius),
-
       -math.pi / 2,
       2 * math.pi * progress,
       false,
