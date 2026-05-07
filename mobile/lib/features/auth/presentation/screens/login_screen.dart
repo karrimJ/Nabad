@@ -9,6 +9,7 @@ import '../components/auth_header.dart';
 import '../components/auth_footer.dart';
 import '../components/social_button.dart';
 
+import '../../data/auth_service.dart';
 import '../../../../routes/app_routes.dart';
 import '../../../../widgets/main_navigation.dart';
 
@@ -23,7 +24,11 @@ class _LoginScreenState extends State<LoginScreen> {
   final TextEditingController emailController = TextEditingController();
   final TextEditingController passwordController = TextEditingController();
 
+  final AuthService _authService = AuthService();
+
   bool rememberMe = true;
+  bool _isLoading = false;
+  bool _isResetLoading = false;
 
   @override
   void dispose() {
@@ -32,11 +37,125 @@ class _LoginScreenState extends State<LoginScreen> {
     super.dispose();
   }
 
-  void _login() {
-    Navigator.pushAndRemoveUntil(
-      context,
-      MaterialPageRoute(builder: (_) => const MainNavigation()),
-      (route) => false,
+  Future<void> _login() async {
+    final email = emailController.text.trim();
+    final password = passwordController.text;
+
+    if (email.isEmpty || password.isEmpty) {
+      _showMessage('Please enter your email and password.');
+      return;
+    }
+
+    if (!email.contains('@')) {
+      _showMessage('Please enter a valid email address.');
+      return;
+    }
+
+    setState(() => _isLoading = true);
+
+    try {
+      await _authService.signInWithEmailAndPassword(
+        email: email,
+        password: password,
+      );
+
+      if (!mounted) return;
+
+      _showMessage('Welcome back!', isError: false);
+
+      Navigator.pushAndRemoveUntil(
+        context,
+        MaterialPageRoute(builder: (_) => const MainNavigation()),
+        (route) => false,
+      );
+    } on AuthException catch (e) {
+      _showMessage(e.message);
+    } catch (e) {
+      _showMessage('Something went wrong: $e');
+    } finally {
+      if (mounted) {
+        setState(() => _isLoading = false);
+      }
+    }
+  }
+
+  Future<void> _onForgotPassword() async {
+  final resetEmailController = TextEditingController(
+    text: emailController.text.trim(),
+  );
+
+  final email = await showDialog<String>(
+    context: context,
+    builder: (context) {
+      return AlertDialog(
+        title: const Text('Reset Password'),
+        content: TextField(
+          controller: resetEmailController,
+          keyboardType: TextInputType.emailAddress,
+          decoration: const InputDecoration(
+            labelText: 'Email address',
+            hintText: 'Enter your account email',
+          ),
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context),
+            child: const Text('Cancel'),
+          ),
+          ElevatedButton(
+            onPressed: () {
+              Navigator.pop(
+                context,
+                resetEmailController.text.trim(),
+              );
+            },
+            child: const Text('Send Link'),
+          ),
+        ],
+      );
+    },
+  );
+
+  resetEmailController.dispose();
+
+  if (email == null) return;
+
+  if (email.isEmpty || !email.contains('@')) {
+    _showMessage('Please enter a valid email address.');
+    return;
+  }
+
+  setState(() => _isResetLoading = true);
+
+  try {
+    await _authService.sendPasswordResetEmail(email: email);
+
+    if (!mounted) return;
+
+    _showMessage(
+      'Password reset link sent. Check your inbox and spam folder.',
+      isError: false,
+    );
+  } on AuthException catch (e) {
+    _showMessage(e.message);
+  } catch (e) {
+    _showMessage('Could not send reset email: $e');
+  } finally {
+    if (mounted) {
+      setState(() => _isResetLoading = false);
+    }
+  }
+}
+
+  void _showMessage(String message, {bool isError = true}) {
+    if (!mounted) return;
+
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content: Text(message),
+        backgroundColor:
+            isError ? VitalRed.vitalRed500 : Success.success500,
+      ),
     );
   }
 
@@ -98,9 +217,9 @@ class _LoginScreenState extends State<LoginScreen> {
                     ],
                   ),
                   GestureDetector(
-                    onTap: () {},
+                    onTap: (_isLoading || _isResetLoading) ? null : _onForgotPassword,
                     child: Text(
-                      "Forgot Password?",
+                      _isResetLoading ? "Sending..." : "Forgot Password?",
                       style: AppTypography.bodySmall.copyWith(
                         color: VitalRed.vitalRed500,
                       ),
@@ -111,7 +230,10 @@ class _LoginScreenState extends State<LoginScreen> {
 
               const SizedBox(height: 16),
 
-              AuthButton(text: "Log In", onPressed: _login),
+              AuthButton(
+                text: _isLoading ? 'Logging in...' : 'Log In',
+                onPressed: _isLoading ? () {} : _login,
+              ),
 
               const SizedBox(height: 24),
 
