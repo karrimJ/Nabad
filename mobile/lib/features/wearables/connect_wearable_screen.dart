@@ -5,6 +5,12 @@ import 'package:flutter_blue_plus/flutter_blue_plus.dart';
 import 'package:mobile/features/wearables/wearable_ble_service.dart';
 import 'package:mobile/theme/app_colors.dart';
 import 'package:mobile/theme/app_typography.dart';
+import 'package:mobile/features/wearables/components/bluetooth_card.dart';
+import 'package:mobile/features/wearables/components/Available_Devices_Section.dart';
+import 'package:mobile/features/wearables/components/InfoBox.dart';
+import 'package:mobile/features/wearables/components/SUPPORTED_DATA.dart';
+import 'package:mobile/features/wearables/components/Permission_Box.dart';
+import '../../routes/app_routes.dart';
 
 class ConnectWearableScreen extends StatefulWidget {
   const ConnectWearableScreen({super.key});
@@ -135,7 +141,12 @@ class _ConnectWearableScreenState extends State<ConnectWearableScreen> {
         elevation: 0,
         leading: IconButton(
           icon: const Icon(Icons.arrow_back, color: Colors.black),
-          onPressed: () => Navigator.pop(context),
+          onPressed: () {
+            Navigator.pushReplacementNamed(
+              context,
+              AppRoutes.wearables,
+            );
+          },
         ),
         centerTitle: true,
         title: Text(
@@ -147,28 +158,15 @@ class _ConnectWearableScreenState extends State<ConnectWearableScreen> {
         padding: const EdgeInsets.all(16),
         child: ListView(
           children: [
-            _statusCard(),
-            const SizedBox(height: 16),
-            _scanButton(),
+            BluetoothCard(),
             const SizedBox(height: 20),
-            _heartRateCard(),
+            AvailableDevicesSection(),
             const SizedBox(height: 20),
-            Text(
-              "Available Devices",
-              style: AppTypography.headingSmall,
-            ),
-            const SizedBox(height: 12),
-            if (_devices.isEmpty)
-              Text(
-                "No devices yet.",
-                style: AppTypography.bodyMedium.copyWith(
-                  color: Neutral.neutral700,
-                ),
-              )
-            else
-              ..._devices.map(_deviceTile),
+            InfoBox(),
             const SizedBox(height: 20),
-            _helpBox(),
+            SupportedDataSection(),
+            const SizedBox(height: 20),
+            PermissionBox(),
           ],
         ),
       ),

@@ -4,6 +4,7 @@ import 'package:geolocator/geolocator.dart';
 import 'package:url_launcher/url_launcher.dart';
 import 'package:mobile/theme/app_colors.dart';
 import 'package:mobile/theme/app_typography.dart';
+import '../../routes/app_routes.dart';
 
 class EmergencyScreen extends StatefulWidget {
   const EmergencyScreen({super.key});
@@ -15,17 +16,19 @@ class EmergencyScreen extends StatefulWidget {
 class _EmergencyScreenState extends State<EmergencyScreen> {
   bool _isSendingSOS = false;
 
-  // ── Get user's GPS location ──────────────────────────
   Future<Position?> _getLocation() async {
     bool serviceEnabled = await Geolocator.isLocationServiceEnabled();
+
     if (!serviceEnabled) {
       _showMessage('Please enable location services');
       return null;
     }
 
     LocationPermission permission = await Geolocator.checkPermission();
+
     if (permission == LocationPermission.denied) {
       permission = await Geolocator.requestPermission();
+
       if (permission == LocationPermission.denied) {
         _showMessage('Location permission denied');
         return null;
@@ -40,7 +43,6 @@ class _EmergencyScreenState extends State<EmergencyScreen> {
     return await Geolocator.getCurrentPosition();
   }
 
-  // ── Find nearest hospital ────────────────────────────
   Future<Map<String, dynamic>?> _findNearestHospital(Position userPos) async {
     final query = await FirebaseFirestore.instance
         .collection('services')
@@ -56,6 +58,7 @@ class _EmergencyScreenState extends State<EmergencyScreen> {
     for (final doc in query.docs) {
       final data = doc.data();
       final loc = data['location'] as GeoPoint?;
+
       if (loc == null) continue;
 
       final distance = Geolocator.distanceBetween(
@@ -67,26 +70,32 @@ class _EmergencyScreenState extends State<EmergencyScreen> {
 
       if (distance < minDistance) {
         minDistance = distance;
-        nearest = {...data, 'distanceKm': (distance / 1000).toStringAsFixed(1)};
+        nearest = {
+          ...data,
+          'distanceKm': (distance / 1000).toStringAsFixed(1),
+        };
       }
     }
 
     return nearest;
   }
 
-  // ── Main SOS flow ────────────────────────────────────
   Future<void> _triggerSOS() async {
-    setState(() => _isSendingSOS = true);
+    setState(() {
+      _isSendingSOS = true;
+    });
 
     final position = await _getLocation();
+
     if (position == null) {
-      setState(() => _isSendingSOS = false);
+      setState(() {
+        _isSendingSOS = false;
+      });
       return;
     }
 
     final nearest = await _findNearestHospital(position);
 
-    // Save SOS alert to Firestore
     await FirebaseFirestore.instance.collection('sosAlerts').add({
       'location': GeoPoint(position.latitude, position.longitude),
       'timestamp': FieldValue.serverTimestamp(),
@@ -94,106 +103,136 @@ class _EmergencyScreenState extends State<EmergencyScreen> {
       'status': 'active',
     });
 
-    setState(() => _isSendingSOS = false);
+    setState(() {
+      _isSendingSOS = false;
+    });
 
     if (!mounted) return;
+
     _showSOSDialog(position, nearest);
   }
 
   void _showSOSDialog(Position pos, Map<String, dynamic>? hospital) {
     showDialog(
       context: context,
-      builder: (ctx) => AlertDialog(
-        backgroundColor: Neutral.neutral100,
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
-        title: Row(
-          children: [
-            const Icon(Icons.warning_amber, color: VitalRed.vitalRed500, size: 28),
-            const SizedBox(width: 8),
-            Text(
-              'SOS Activated',
-              style: AppTypography.headingSmall.copyWith(
+      builder: (ctx) {
+        return AlertDialog(
+          backgroundColor: Neutral.neutral100,
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(16),
+          ),
+          title: Row(
+            children: [
+              const Icon(
+                Icons.warning_amber,
                 color: VitalRed.vitalRed500,
-                fontWeight: FontWeight.w700,
+                size: 28,
               ),
-            ),
-          ],
-        ),
-        content: Column(
-          mainAxisSize: MainAxisSize.min,
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Text(
-              '📍 Your Location:',
-              style: AppTypography.bodyMedium.copyWith(fontWeight: FontWeight.w600),
-            ),
-            const SizedBox(height: 4),
-            Text(
-              'Lat: ${pos.latitude.toStringAsFixed(4)}\nLng: ${pos.longitude.toStringAsFixed(4)}',
-              style: AppTypography.bodySmall.copyWith(color: Neutral.neutral700),
-            ),
-            const SizedBox(height: 12),
-            if (hospital != null) ...[
+              const SizedBox(width: 8),
               Text(
-                '🏥 Nearest Hospital:',
-                style: AppTypography.bodyMedium.copyWith(fontWeight: FontWeight.w600),
-              ),
-              const SizedBox(height: 4),
-              Text(
-                '${hospital['name']}\n${hospital['distanceKm']} km away',
-                style: AppTypography.bodySmall.copyWith(color: Neutral.neutral700),
-              ),
-              const SizedBox(height: 4),
-              Text(
-                '📞 ${hospital['phoneNumber'] ?? 'No phone'}',
-                style: AppTypography.bodySmall.copyWith(color: VitalRed.vitalRed500),
+                'SOS Activated',
+                style: AppTypography.headingSmall.copyWith(
+                  color: VitalRed.vitalRed500,
+                  fontWeight: FontWeight.w700,
+                ),
               ),
             ],
+          ),
+          content: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text(
+                '📍 Your Location:',
+                style: AppTypography.bodyMedium.copyWith(
+                  fontWeight: FontWeight.w600,
+                ),
+              ),
+              const SizedBox(height: 4),
+              Text(
+                'Lat: ${pos.latitude.toStringAsFixed(4)}\nLng: ${pos.longitude.toStringAsFixed(4)}',
+                style: AppTypography.bodySmall.copyWith(
+                  color: Neutral.neutral700,
+                ),
+              ),
+              const SizedBox(height: 12),
+              if (hospital != null) ...[
+                Text(
+                  '🏥 Nearest Hospital:',
+                  style: AppTypography.bodyMedium.copyWith(
+                    fontWeight: FontWeight.w600,
+                  ),
+                ),
+                const SizedBox(height: 4),
+                Text(
+                  '${hospital['name']}\n${hospital['distanceKm']} km away',
+                  style: AppTypography.bodySmall.copyWith(
+                    color: Neutral.neutral700,
+                  ),
+                ),
+                const SizedBox(height: 4),
+                Text(
+                  '📞 ${hospital['phoneNumber'] ?? 'No phone'}',
+                  style: AppTypography.bodySmall.copyWith(
+                    color: VitalRed.vitalRed500,
+                  ),
+                ),
+              ],
+            ],
+          ),
+          actions: [
+            TextButton(
+              onPressed: () {
+                Navigator.pop(ctx);
+              },
+              child: Text(
+                'Close',
+                style: AppTypography.bodyMedium.copyWith(
+                  color: Neutral.neutral700,
+                ),
+              ),
+            ),
+            ElevatedButton(
+              style: ElevatedButton.styleFrom(
+                backgroundColor: VitalRed.vitalRed500,
+                foregroundColor: Colors.white,
+              ),
+              onPressed: () {
+                Navigator.pop(ctx);
+                _callNumber(hospital?['phoneNumber'] ?? '140');
+              },
+              child: const Text('Call Hospital'),
+            ),
           ],
-        ),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(ctx),
-            child: Text(
-              'Close',
-              style: AppTypography.bodyMedium.copyWith(color: Neutral.neutral700),
-            ),
-          ),
-          ElevatedButton(
-            style: ElevatedButton.styleFrom(
-              backgroundColor: VitalRed.vitalRed500,
-              foregroundColor: Colors.white,
-            ),
-            onPressed: () {
-              Navigator.pop(ctx);
-              _callNumber(hospital?['phoneNumber'] ?? '140');
-            },
-            child: const Text('Call Hospital'),
-          ),
-        ],
-      ),
+        );
+      },
     );
   }
 
-  // ── Call a phone number ──────────────────────────────
   Future<void> _callNumber(String number) async {
     final uri = Uri.parse('tel:$number');
+
     if (await canLaunchUrl(uri)) {
       await launchUrl(uri);
+    } else {
+      _showMessage('Could not open phone app');
     }
   }
 
-  // ── Send SMS with location ───────────────────────────
   Future<void> _sendEmergencySMS() async {
     final position = await _getLocation();
+
     if (position == null) return;
 
     final mapsLink =
         'https://maps.google.com/?q=${position.latitude},${position.longitude}';
+
     final body = Uri.encodeComponent(
-        'EMERGENCY! I need help. My location: $mapsLink');
+      'EMERGENCY! I need help. My location: $mapsLink',
+    );
 
     final uri = Uri.parse('sms:?body=$body');
+
     if (await canLaunchUrl(uri)) {
       await launchUrl(uri);
     } else {
@@ -203,6 +242,7 @@ class _EmergencyScreenState extends State<EmergencyScreen> {
 
   void _showMessage(String msg) {
     if (!mounted) return;
+
     ScaffoldMessenger.of(context).showSnackBar(
       SnackBar(
         content: Text(msg),
@@ -220,8 +260,17 @@ class _EmergencyScreenState extends State<EmergencyScreen> {
         elevation: 0,
         scrolledUnderElevation: 0,
         leading: IconButton(
-          icon: const Icon(Icons.arrow_back, color: Neutral.neutral900),
-          onPressed: () => Navigator.pop(context),
+          icon: const Icon(
+            Icons.arrow_back,
+            color: Neutral.neutral900,
+          ),
+          onPressed: () {
+            Navigator.pushNamedAndRemoveUntil(
+              context,
+              AppRoutes.home,
+              (route) => false,
+            );
+          },
         ),
         title: Text(
           'Emergency',
@@ -233,12 +282,17 @@ class _EmergencyScreenState extends State<EmergencyScreen> {
         centerTitle: true,
       ),
       body: SingleChildScrollView(
-        padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 16),
+        padding: const EdgeInsets.symmetric(
+          horizontal: 20,
+          vertical: 16,
+        ),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             const SizedBox(height: 32),
-            Center(child: _sosButton()),
+            Center(
+              child: _sosButton(),
+            ),
             const SizedBox(height: 16),
             if (_isSendingSOS)
               const Center(
@@ -278,7 +332,10 @@ class _EmergencyScreenState extends State<EmergencyScreen> {
         decoration: BoxDecoration(
           shape: BoxShape.circle,
           gradient: const RadialGradient(
-            colors: [VitalRed.vitalRed500, Color(0xFFB71C1C)],
+            colors: [
+              VitalRed.vitalRed500,
+              Color(0xFFB71C1C),
+            ],
           ),
           boxShadow: [
             BoxShadow(
@@ -290,7 +347,10 @@ class _EmergencyScreenState extends State<EmergencyScreen> {
         ),
         child: Center(
           child: _isSendingSOS
-              ? const CircularProgressIndicator(color: Colors.white, strokeWidth: 4)
+              ? const CircularProgressIndicator(
+                  color: Colors.white,
+                  strokeWidth: 4,
+                )
               : Text(
                   'SOS',
                   style: AppTypography.headingLarge.copyWith(
@@ -316,7 +376,9 @@ class _EmergencyScreenState extends State<EmergencyScreen> {
           _actionRow(
             icon: Icons.phone,
             label: 'Call Red Cross (140)',
-            onTap: () => _callNumber('140'),
+            onTap: () {
+              _callNumber('140');
+            },
           ),
           _divider(),
           _actionRow(
@@ -344,10 +406,17 @@ class _EmergencyScreenState extends State<EmergencyScreen> {
       onTap: onTap,
       behavior: HitTestBehavior.opaque,
       child: Padding(
-        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
+        padding: const EdgeInsets.symmetric(
+          horizontal: 16,
+          vertical: 14,
+        ),
         child: Row(
           children: [
-            Icon(icon, color: VitalRed.vitalRed500, size: 24),
+            Icon(
+              icon,
+              color: VitalRed.vitalRed500,
+              size: 24,
+            ),
             const SizedBox(width: 14),
             Expanded(
               child: Text(
@@ -358,7 +427,11 @@ class _EmergencyScreenState extends State<EmergencyScreen> {
                 ),
               ),
             ),
-            const Icon(Icons.chevron_right, color: Neutral.neutral600, size: 20),
+            const Icon(
+              Icons.chevron_right,
+              color: Neutral.neutral600,
+              size: 20,
+            ),
           ],
         ),
       ),
@@ -377,9 +450,17 @@ class _EmergencyScreenState extends State<EmergencyScreen> {
 
   Widget _viewMedicalIdCard() {
     return GestureDetector(
-      onTap: () {},
+      onTap: () {
+        Navigator.pushNamed(
+          context,
+          AppRoutes.medicalId,
+        );
+      },
       child: Container(
-        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 16),
+        padding: const EdgeInsets.symmetric(
+          horizontal: 16,
+          vertical: 16,
+        ),
         decoration: BoxDecoration(
           color: Neutral.neutral100,
           borderRadius: BorderRadius.circular(14),
@@ -393,7 +474,11 @@ class _EmergencyScreenState extends State<EmergencyScreen> {
                 color: VitalRed.vitalRed500,
                 borderRadius: BorderRadius.circular(8),
               ),
-              child: const Icon(Icons.medical_services, color: Colors.white, size: 22),
+              child: const Icon(
+                Icons.medical_services,
+                color: Colors.white,
+                size: 22,
+              ),
             ),
             const SizedBox(width: 14),
             Text(

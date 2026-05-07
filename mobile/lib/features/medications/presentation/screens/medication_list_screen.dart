@@ -9,6 +9,7 @@ import '../../data/medication_model.dart';
 
 import 'add_medication_screen.dart';
 import 'medication_details_screen.dart';
+import '../../../../routes/app_routes.dart';
 
 class MedicationListScreen extends StatelessWidget {
   const MedicationListScreen({super.key});
@@ -23,22 +24,22 @@ class MedicationListScreen extends StatelessWidget {
       appBar: AppBar(
         backgroundColor: Neutral.neutral100,
         elevation: 0,
-
         leading: IconButton(
-          icon: const Icon(
-            Icons.arrow_back,
-            color: Colors.black,
-          ),
-          onPressed: () => Navigator.pop(context),
+          icon: const Icon(Icons.arrow_back, color: Colors.black),
+          onPressed: () {
+            Navigator.pushNamedAndRemoveUntil(
+              context,
+              AppRoutes.home,
+              (route) => false,
+            );
+          },
         ),
-
         title: Text(
           "Medication List",
           style: AppTypography.headingMedium.copyWith(
             color: Neutral.neutral900,
           ),
         ),
-
         actions: [
           Padding(
             padding: const EdgeInsets.only(right: 16),
@@ -52,7 +53,6 @@ class MedicationListScreen extends StatelessWidget {
                   ),
                 );
               },
-
               child: CircleAvatar(
                 backgroundColor: VitalRed.vitalRed500,
 
@@ -65,6 +65,14 @@ class MedicationListScreen extends StatelessWidget {
           ),
         ],
       ),
+      body: FutureBuilder<List<MedicationModel>>(
+        future: service.getMedicationList(),
+        builder: (context, snapshot) {
+          if (snapshot.connectionState == ConnectionState.waiting) {
+            return const Center(
+              child: CircularProgressIndicator(),
+            );
+          }
 
       body: StreamBuilder<QuerySnapshot>(
         stream: service.getMedicationStream(),
@@ -72,18 +80,38 @@ class MedicationListScreen extends StatelessWidget {
         builder: (context, snapshot) {
           if (snapshot.hasError) {
             return Center(
-              child: Padding(
-                padding: const EdgeInsets.all(20),
+              child: Text('Error: ${snapshot.error}'),
+            );
+          }
 
                 child: Text(
                   'Error: ${snapshot.error}',
 
-                  textAlign: TextAlign.center,
-
-                  style: AppTypography.bodyMedium.copyWith(
-                    color: VitalRed.vitalRed500,
+          if (medications.isEmpty) {
+            return Center(
+              child: Column(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  Icon(
+                    Icons.medication_outlined,
+                    size: 64,
+                    color: Neutral.neutral400,
                   ),
-                ),
+                  const SizedBox(height: 16),
+                  Text(
+                    "No medications yet",
+                    style: AppTypography.bodyLarge.copyWith(
+                      color: Neutral.neutral500,
+                    ),
+                  ),
+                  const SizedBox(height: 8),
+                  Text(
+                    "Tap + to add your first medication",
+                    style: AppTypography.bodySmall.copyWith(
+                      color: Neutral.neutral400,
+                    ),
+                  ),
+                ],
               ),
             );
           }
@@ -114,35 +142,10 @@ class MedicationListScreen extends StatelessWidget {
                   "All Medications",
                   style: AppTypography.headingMedium,
                 ),
-
-                const SizedBox(height: 8),
-
-                _offlineStatusBanner(isFromCache),
-
                 const SizedBox(height: 16),
-
-               ...docs.map((doc) {
-  return FutureBuilder<MedicationModel>(
-    future: MedicationModel.fromFirestore(doc),
-
-    builder: (context, medSnapshot) {
-      if (!medSnapshot.hasData) {
-        return const SizedBox();
-      }
-
-      final med = medSnapshot.data!;
-
-      final bool isPending =
-          doc.metadata.hasPendingWrites;
-
-      return _medicationCard(
-        context: context,
-        med: med,
-        isPending: isPending,
-      );
-    },
-  );
-}).toList(),
+                ...medications.map(
+                  (med) => _medicationCard(context, med),
+                ),
               ],
             ),
           );
@@ -230,12 +233,12 @@ class MedicationListScreen extends StatelessWidget {
         Navigator.push(
           context,
           MaterialPageRoute(
-            builder: (_) =>
-                MedicationDetailsScreen(medication: med),
+            builder: (_) => MedicationDetailsScreen(
+              medication: med,
+            ),
           ),
         );
       },
-
       child: Container(
         margin: const EdgeInsets.only(bottom: 16),
 
@@ -261,6 +264,14 @@ class MedicationListScreen extends StatelessWidget {
               'assets/images/medication.png',
               width: 40,
               height: 40,
+              decoration: BoxDecoration(
+                color: Neutral.neutral200,
+                borderRadius: BorderRadius.circular(10),
+              ),
+              child: const Icon(
+                Icons.medication,
+                color: Colors.white,
+              ),
             ),
 
             const SizedBox(width: 12),
@@ -274,7 +285,6 @@ class MedicationListScreen extends StatelessWidget {
                     med.medicationName,
                     style: AppTypography.headingSmall,
                   ),
-
                   const SizedBox(height: 4),
 
                   Text(
@@ -288,15 +298,8 @@ class MedicationListScreen extends StatelessWidget {
                   const SizedBox(height: 6),
 
                   Text(
-                    isPending ? 'Pending sync' : 'Synced',
-
-                    style: AppTypography.bodySmall.copyWith(
-                      color: isPending
-                          ? VitalRed.vitalRed500
-                          : Neutral.neutral500,
-
-                      fontWeight: FontWeight.w600,
-                    ),
+                    '${med.dosage}${med.specificTimes.isNotEmpty ? ' - ${med.specificTimes}' : ''}',
+                    style: AppTypography.bodySmall,
                   ),
                 ],
               ),
@@ -307,19 +310,14 @@ class MedicationListScreen extends StatelessWidget {
                 horizontal: 10,
                 vertical: 6,
               ),
-
               decoration: BoxDecoration(
                 color: VitalRed.vitalRed500.withOpacity(0.1),
-
                 borderRadius: BorderRadius.circular(8),
               ),
-
               child: Text(
                 med.frequency,
-
                 style: AppTypography.bodySmall.copyWith(
                   color: VitalRed.vitalRed500,
-                  fontWeight: FontWeight.w600,
                 ),
               ),
             ),

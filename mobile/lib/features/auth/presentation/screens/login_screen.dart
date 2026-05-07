@@ -9,11 +9,35 @@ import '../components/auth_header.dart';
 import '../components/auth_footer.dart';
 import '../components/social_button.dart';
 
-class LoginScreen extends StatelessWidget {
-  LoginScreen({super.key});
+import '../../../../routes/app_routes.dart';
 
-  final emailController = TextEditingController();
-  final passwordController = TextEditingController();
+class LoginScreen extends StatefulWidget {
+  const LoginScreen({super.key});
+
+  @override
+  State<LoginScreen> createState() => _LoginScreenState();
+}
+
+class _LoginScreenState extends State<LoginScreen> {
+  final TextEditingController emailController = TextEditingController();
+  final TextEditingController passwordController = TextEditingController();
+
+  bool rememberMe = true;
+
+  @override
+  void dispose() {
+    emailController.dispose();
+    passwordController.dispose();
+    super.dispose();
+  }
+
+  void _login() {
+    Navigator.pushNamedAndRemoveUntil(
+      context,
+      AppRoutes.home,
+      (route) => false,
+    );
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -25,8 +49,6 @@ class LoginScreen extends StatelessWidget {
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-
-              /// HEADER
               AuthHeader(
                 title: "Good to see you again!",
                 subtitle:
@@ -35,7 +57,6 @@ class LoginScreen extends StatelessWidget {
 
               const SizedBox(height: 28),
 
-              /// EMAIL
               AuthInput(
                 hint: "Enter your email",
                 icon: Icons.email_outlined,
@@ -44,7 +65,6 @@ class LoginScreen extends StatelessWidget {
 
               const SizedBox(height: 16),
 
-              /// PASSWORD
               AuthInput(
                 hint: "Password",
                 icon: Icons.lock_outline,
@@ -54,15 +74,18 @@ class LoginScreen extends StatelessWidget {
 
               const SizedBox(height: 12),
 
-              /// REMEMBER + FORGOT
               Row(
                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children: [
                   Row(
                     children: [
                       Checkbox(
-                        value: true,
-                        onChanged: (_) {},
+                        value: rememberMe,
+                        onChanged: (value) {
+                          setState(() {
+                            rememberMe = value ?? false;
+                          });
+                        },
                         activeColor: VitalRed.vitalRed500,
                       ),
                       Text(
@@ -73,10 +96,13 @@ class LoginScreen extends StatelessWidget {
                       ),
                     ],
                   ),
-                  Text(
-                    "Forget Password?",
-                    style: AppTypography.bodySmall.copyWith(
-                      color: VitalRed.vitalRed500,
+                  GestureDetector(
+                    onTap: () {},
+                    child: Text(
+                      "Forgot Password?",
+                      style: AppTypography.bodySmall.copyWith(
+                        color: VitalRed.vitalRed500,
+                      ),
                     ),
                   ),
                 ],
@@ -84,15 +110,13 @@ class LoginScreen extends StatelessWidget {
 
               const SizedBox(height: 16),
 
-              /// LOGIN BUTTON
               AuthButton(
                 text: "Log In",
-                onPressed: () {},
+                onPressed: _login,
               ),
 
               const SizedBox(height: 24),
 
-              /// DIVIDER
               Row(
                 children: [
                   Expanded(
@@ -121,7 +145,6 @@ class LoginScreen extends StatelessWidget {
 
               const SizedBox(height: 20),
 
-              /// GOOGLE BUTTON
               SocialButton(
                 text: "Log In With Google",
                 assetPath: "assets/icons/google.svg",
@@ -130,7 +153,6 @@ class LoginScreen extends StatelessWidget {
 
               const SizedBox(height: 12),
 
-              /// APPLE BUTTON
               SocialButton(
                 text: "Log In With Apple",
                 assetPath: "assets/icons/apple.svg",
@@ -139,19 +161,13 @@ class LoginScreen extends StatelessWidget {
 
               const SizedBox(height: 40),
 
-              /// FOOTER
               Center(
                 child: AuthFooter(
                   text: "Don't have an account? ",
                   actionText: "Sign Up",
                   onTap: () {
-  Navigator.push(
-    context,
-    MaterialPageRoute(
-      builder: (_) => const RegisterScreen(),
-    ),
-  );
-},
+                    Navigator.pushNamed(context, AppRoutes.register);
+                  },
                 ),
               ),
             ],

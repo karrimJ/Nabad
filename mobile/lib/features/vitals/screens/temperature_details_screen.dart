@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:mobile/theme/app_colors.dart';
 import 'package:mobile/theme/app_typography.dart';
 import 'package:mobile/features/auth/presentation/components/auth_button.dart';
+import 'add_manual_reading_screen.dart';
 
 class TemperatureDetailsScreen extends StatefulWidget {
   const TemperatureDetailsScreen({super.key});
@@ -15,9 +16,7 @@ class _TemperatureDetailsScreenState extends State<TemperatureDetailsScreen> {
   int _selectedTab = 0; // 0 = Day, 1 = Week
 
   final List<double> _dayReadings = [36.6, 36.8, 36.9, 37.0, 37.1, 36.9];
-  final List<String> _dayLabels = [
-    '10:00', '14:00', '18:00', '22:00'
-  ];
+  final List<String> _dayLabels = ['10:00', '14:00', '18:00', '22:00'];
 
   @override
   Widget build(BuildContext context) {
@@ -63,10 +62,7 @@ class _TemperatureDetailsScreenState extends State<TemperatureDetailsScreen> {
             const SizedBox(height: 16),
             _addReadingButton(),
             const SizedBox(height: 12),
-            AuthButton(
-              text: 'View History',
-              onPressed: () {},
-            ),
+            AuthButton(text: 'View History', onPressed: () {}),
             const SizedBox(height: 24),
           ],
         ),
@@ -111,8 +107,7 @@ class _TemperatureDetailsScreenState extends State<TemperatureDetailsScreen> {
           ),
           const SizedBox(height: 8),
           Container(
-            padding:
-                const EdgeInsets.symmetric(horizontal: 24, vertical: 6),
+            padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 6),
             decoration: BoxDecoration(
               color: Success.success500,
               borderRadius: BorderRadius.circular(20),
@@ -137,9 +132,7 @@ class _TemperatureDetailsScreenState extends State<TemperatureDetailsScreen> {
           const SizedBox(height: 4),
           Text(
             'Last updated: Today at 09:12',
-            style: AppTypography.bodySmall.copyWith(
-              color: Neutral.neutral600,
-            ),
+            style: AppTypography.bodySmall.copyWith(color: Neutral.neutral600),
           ),
         ],
       ),
@@ -155,10 +148,7 @@ class _TemperatureDetailsScreenState extends State<TemperatureDetailsScreen> {
       ),
       child: Row(
         mainAxisSize: MainAxisSize.min,
-        children: [
-          _toggleButton('Day', 0),
-          _toggleButton('Week', 1),
-        ],
+        children: [_toggleButton('Day', 0), _toggleButton('Week', 1)],
       ),
     );
   }
@@ -222,11 +212,7 @@ class _TemperatureDetailsScreenState extends State<TemperatureDetailsScreen> {
               shape: BoxShape.circle,
               color: Success.success500,
             ),
-            child: const Icon(
-              Icons.check,
-              color: Colors.white,
-              size: 20,
-            ),
+            child: const Icon(Icons.check, color: Colors.white, size: 20),
           ),
           const SizedBox(width: 12),
           Expanded(
@@ -257,7 +243,12 @@ class _TemperatureDetailsScreenState extends State<TemperatureDetailsScreen> {
 
   Widget _addReadingButton() {
     return GestureDetector(
-      onTap: () {},
+      onTap: () {
+        Navigator.push(
+          context,
+          MaterialPageRoute(builder: (_) => const AddReadingScreen()),
+        );
+      },
       child: Container(
         padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 16),
         decoration: BoxDecoration(
@@ -364,8 +355,7 @@ class _LineChartPainter extends CustomPainter {
 
     // X-axis labels
     for (var i = 0; i < xLabels.length; i++) {
-      final x =
-          leftPad + (i / (xLabels.length - 1)) * chartWidth;
+      final x = leftPad + (i / (xLabels.length - 1)) * chartWidth;
       final tp = TextPainter(
         text: TextSpan(text: xLabels[i], style: textStyle),
         textDirection: TextDirection.ltr,

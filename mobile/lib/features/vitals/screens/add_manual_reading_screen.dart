@@ -21,6 +21,7 @@ class _AddReadingScreenState extends State<AddReadingScreen> {
     'Heart Rate',
     'Blood Pressure',
     'Temperature',
+    'Glucose',
     'Oxygen Level',
   ];
 
@@ -32,6 +33,8 @@ class _AddReadingScreenState extends State<AddReadingScreen> {
         return 'mmHg';
       case 'Temperature':
         return '°C';
+      case 'Glucose':
+        return 'mg/dl';
       case 'Oxygen Level':
         return '%';
       default:
@@ -57,8 +60,18 @@ class _AddReadingScreenState extends State<AddReadingScreen> {
     );
     if (picked != null) {
       const months = [
-        'Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun',
-        'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'
+        'Jan',
+        'Feb',
+        'Mar',
+        'Apr',
+        'May',
+        'Jun',
+        'Jul',
+        'Aug',
+        'Sep',
+        'Oct',
+        'Nov',
+        'Dec',
       ];
       setState(() {
         _dateController.text =
@@ -109,13 +122,11 @@ class _AddReadingScreenState extends State<AddReadingScreen> {
   InputDecoration _decoration({Widget? suffix, String? hint}) {
     return InputDecoration(
       hintText: hint,
-      hintStyle:
-          AppTypography.bodyMedium.copyWith(color: Neutral.neutral500),
+      hintStyle: AppTypography.bodyMedium.copyWith(color: Neutral.neutral500),
       suffixIcon: suffix,
       filled: true,
       fillColor: Neutral.neutral100,
-      contentPadding:
-          const EdgeInsets.symmetric(horizontal: 16, vertical: 16),
+      contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 16),
       border: OutlineInputBorder(
         borderRadius: BorderRadius.circular(14),
         borderSide: const BorderSide(color: Neutral.neutral400, width: 1),
@@ -147,10 +158,13 @@ class _AddReadingScreenState extends State<AddReadingScreen> {
             child: DropdownButton<String>(
               value: _vitalType,
               isExpanded: true,
-              icon: const Icon(Icons.keyboard_arrow_down,
-                  color: Neutral.neutral700),
-              style: AppTypography.bodyMedium
-                  .copyWith(color: Neutral.neutral800),
+              icon: const Icon(
+                Icons.keyboard_arrow_down,
+                color: Neutral.neutral700,
+              ),
+              style: AppTypography.bodyMedium.copyWith(
+                color: Neutral.neutral800,
+              ),
               dropdownColor: Neutral.neutral100,
               items: _vitalTypes
                   .map((t) => DropdownMenuItem(value: t, child: Text(t)))
@@ -174,20 +188,23 @@ class _AddReadingScreenState extends State<AddReadingScreen> {
           controller: _valueController,
           keyboardType: TextInputType.number,
           style: AppTypography.bodyMedium.copyWith(color: Neutral.neutral800),
-          decoration: _decoration(
-            suffix: Padding(
-              padding: const EdgeInsets.only(right: 16),
-              child: Text(
-                _unit,
-                style: AppTypography.bodyMedium.copyWith(
-                  color: Neutral.neutral700,
+          decoration:
+              _decoration(
+                suffix: Padding(
+                  padding: const EdgeInsets.only(right: 16),
+                  child: Text(
+                    _unit,
+                    style: AppTypography.bodyMedium.copyWith(
+                      color: Neutral.neutral700,
+                    ),
+                  ),
+                ),
+              ).copyWith(
+                suffixIconConstraints: const BoxConstraints(
+                  minWidth: 0,
+                  minHeight: 0,
                 ),
               ),
-            ),
-          ).copyWith(
-            suffixIconConstraints:
-                const BoxConstraints(minWidth: 0, minHeight: 0),
-          ),
         ),
       ],
     );
@@ -299,8 +316,7 @@ class _AddReadingScreenState extends State<AddReadingScreen> {
         children: [
           Expanded(
             child: SingleChildScrollView(
-              padding:
-                  const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
+              padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [

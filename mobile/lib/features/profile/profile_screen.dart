@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:mobile/theme/app_colors.dart';
 import 'package:mobile/theme/app_typography.dart';
+import '../../routes/app_routes.dart';
 
 class ProfileScreen extends StatelessWidget {
   const ProfileScreen({super.key});
@@ -53,24 +54,37 @@ class ProfileScreen extends StatelessWidget {
               _menuItem(
                 icon: Icons.person_outline,
                 label: 'My Profile',
-                onTap: () {},
+                onTap: () {
+                  Navigator.pushNamed(context, AppRoutes.editProfile);
+                },
               ),
               const SizedBox(height: 12),
               _menuItem(
                 icon: Icons.list_alt_outlined,
                 label: 'My Vitals',
-                onTap: () {},
+                onTap: () {
+                  Navigator.pushNamedAndRemoveUntil(
+                    context,AppRoutes.home,
+                    (route) =>false,
+                  );
+                },
               ),
               const SizedBox(height: 12),
               _menuItem(
                 icon: Icons.notifications_outlined,
                 label: 'Notifications',
-                onTap: () {},
+                onTap: () {
+                  Navigator.pushNamed(context, AppRoutes.notifications);
+                },
               ),
               const SizedBox(height: 12),
               _logoutItem(
                 onTap: () {
-                  // TODO: handle logout
+                  Navigator.pushNamedAndRemoveUntil(
+                    context,
+                    AppRoutes.login,
+                    (route) => false,
+                  );
                 },
               ),
             ],

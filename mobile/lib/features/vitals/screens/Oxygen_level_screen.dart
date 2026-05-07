@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'add_manual_reading_screen.dart';
 
 class OxygenLevelScreen extends StatelessWidget {
   const OxygenLevelScreen({super.key});
@@ -28,14 +29,16 @@ class OxygenLevelScreen extends StatelessWidget {
       body: SafeArea(
         child: Column(
           children: [
-            // ── App Bar ──────────────────────────
             Padding(
               padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
               child: Row(
                 children: [
                   IconButton(
-                    icon: const Icon(Icons.arrow_back_ios_new,
-                        color: Color(0xFF1A1A1A), size: 20),
+                    icon: const Icon(
+                      Icons.arrow_back_ios_new,
+                      color: Color(0xFF1A1A1A),
+                      size: 20,
+                    ),
                     onPressed: () => Navigator.maybePop(context),
                   ),
                   const Expanded(
@@ -55,30 +58,32 @@ class OxygenLevelScreen extends StatelessWidget {
               ),
             ),
 
-            // ── Scrollable Body ──────────────────
             Expanded(
               child: SingleChildScrollView(
                 padding: const EdgeInsets.symmetric(
-                    horizontal: 20, vertical: 16),
+                  horizontal: 20,
+                  vertical: 16,
+                ),
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    // ── Header Card ──────────────
                     Container(
                       width: double.infinity,
                       padding: const EdgeInsets.symmetric(
-                          vertical: 24, horizontal: 20),
+                        vertical: 24,
+                        horizontal: 20,
+                      ),
                       decoration: BoxDecoration(
                         color: const Color(0xFFFDE8E8),
                         borderRadius: BorderRadius.circular(16),
                       ),
                       child: Column(
                         children: [
-                          Row(
+                          const Row(
                             mainAxisAlignment: MainAxisAlignment.center,
                             crossAxisAlignment: CrossAxisAlignment.baseline,
                             textBaseline: TextBaseline.alphabetic,
-                            children: const [
+                            children: [
                               Text(
                                 '88',
                                 style: TextStyle(
@@ -100,10 +105,11 @@ class OxygenLevelScreen extends StatelessWidget {
                             ],
                           ),
                           const SizedBox(height: 8),
-                          // Critical Badge
                           Container(
                             padding: const EdgeInsets.symmetric(
-                                horizontal: 14, vertical: 5),
+                              horizontal: 14,
+                              vertical: 5,
+                            ),
                             decoration: BoxDecoration(
                               color: const Color(0xFFCC2222),
                               borderRadius: BorderRadius.circular(20),
@@ -138,6 +144,7 @@ class OxygenLevelScreen extends StatelessWidget {
                         ],
                       ),
                     ),
+
                     const SizedBox(height: 28),
 
                     const Text(
@@ -160,7 +167,9 @@ class OxygenLevelScreen extends StatelessWidget {
 
                     Container(
                       padding: const EdgeInsets.symmetric(
-                          vertical: 20, horizontal: 8),
+                        vertical: 20,
+                        horizontal: 8,
+                      ),
                       decoration: BoxDecoration(
                         color: Colors.white,
                         borderRadius: BorderRadius.circular(16),
@@ -175,20 +184,22 @@ class OxygenLevelScreen extends StatelessWidget {
                       child: Row(
                         mainAxisAlignment: MainAxisAlignment.spaceAround,
                         crossAxisAlignment: CrossAxisAlignment.end,
-                        children: _weeklyData
-                            .map((d) => _buildBar(d))
-                            .toList(),
+                        children: _weeklyData.map((d) => _buildBar(d)).toList(),
                       ),
                     ),
+
                     const SizedBox(height: 8),
 
                     _buildReadingRow('Today (14:00)', '88%'),
                     _buildReadingRow('Today (13:00)', '90%'),
+
                     const SizedBox(height: 20),
 
                     Container(
                       padding: const EdgeInsets.symmetric(
-                          horizontal: 16, vertical: 14),
+                        horizontal: 16,
+                        vertical: 14,
+                      ),
                       decoration: BoxDecoration(
                         color: const Color(0xFFFDE8E8),
                         borderRadius: BorderRadius.circular(12),
@@ -202,8 +213,11 @@ class OxygenLevelScreen extends StatelessWidget {
                               color: Color(0xFFCC2222),
                               shape: BoxShape.circle,
                             ),
-                            child: const Icon(Icons.priority_high,
-                                color: Colors.white, size: 18),
+                            child: const Icon(
+                              Icons.priority_high,
+                              color: Colors.white,
+                              size: 18,
+                            ),
                           ),
                           const SizedBox(width: 12),
                           const Expanded(
@@ -232,28 +246,36 @@ class OxygenLevelScreen extends StatelessWidget {
                         ],
                       ),
                     ),
+
                     const SizedBox(height: 16),
 
-                    // ── Add Manual Reading ───────
                     GestureDetector(
                       onTap: () {
-                        // TODO: navigate to manual input
+                        Navigator.push(
+                          context,
+                          MaterialPageRoute(
+                            builder: (_) => const AddReadingScreen(),
+                          ),
+                        );
                       },
                       child: Container(
                         width: double.infinity,
-                        padding:
-                            const EdgeInsets.symmetric(vertical: 16),
+                        padding: const EdgeInsets.symmetric(vertical: 16),
                         decoration: BoxDecoration(
                           color: Colors.white,
                           borderRadius: BorderRadius.circular(12),
                           border: Border.all(
-                              color: const Color(0xFFE0E0E0)),
+                            color: const Color(0xFFE0E0E0),
+                          ),
                         ),
                         child: const Row(
                           mainAxisAlignment: MainAxisAlignment.center,
                           children: [
-                            Icon(Icons.add,
-                                color: Color(0xFF1A1A1A), size: 20),
+                            Icon(
+                              Icons.add,
+                              color: Color(0xFF1A1A1A),
+                              size: 20,
+                            ),
                             SizedBox(width: 8),
                             Text(
                               'Add Manual Reading',
@@ -267,20 +289,17 @@ class OxygenLevelScreen extends StatelessWidget {
                         ),
                       ),
                     ),
+
                     const SizedBox(height: 16),
 
-                    // ── View History Button ──────
                     SizedBox(
                       width: double.infinity,
                       child: ElevatedButton(
-                        onPressed: () {
-                          // TODO: navigate to history
-                        },
+                        onPressed: () {},
                         style: ElevatedButton.styleFrom(
                           backgroundColor: const Color(0xFFCC2222),
                           foregroundColor: Colors.white,
-                          padding:
-                              const EdgeInsets.symmetric(vertical: 18),
+                          padding: const EdgeInsets.symmetric(vertical: 18),
                           shape: RoundedRectangleBorder(
                             borderRadius: BorderRadius.circular(14),
                           ),
@@ -296,6 +315,7 @@ class OxygenLevelScreen extends StatelessWidget {
                         ),
                       ),
                     ),
+
                     const SizedBox(height: 24),
                   ],
                 ),
@@ -313,8 +333,7 @@ class OxygenLevelScreen extends StatelessWidget {
     const double dotSize = 10.0;
 
     final double topSpace = (1.0 - data.maxPercent) * chartHeight;
-    final double barHeight =
-        (data.maxPercent - data.minPercent) * chartHeight;
+    final double barHeight = (data.maxPercent - data.minPercent) * chartHeight;
 
     return Column(
       mainAxisSize: MainAxisSize.min,
@@ -386,7 +405,10 @@ class OxygenLevelScreen extends StatelessWidget {
       padding: const EdgeInsets.symmetric(vertical: 16, horizontal: 4),
       decoration: const BoxDecoration(
         border: Border(
-          bottom: BorderSide(color: Color(0xFFEEEEEE), width: 1),
+          bottom: BorderSide(
+            color: Color(0xFFEEEEEE),
+            width: 1,
+          ),
         ),
       ),
       child: Row(

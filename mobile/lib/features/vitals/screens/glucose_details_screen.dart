@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:mobile/theme/app_colors.dart';
 import 'package:mobile/theme/app_typography.dart';
 import 'package:mobile/features/auth/presentation/components/auth_button.dart';
+import 'add_manual_reading_screen.dart';
 
 class GlucoseDetailsScreen extends StatefulWidget {
   const GlucoseDetailsScreen({super.key});
@@ -57,10 +58,7 @@ class _GlucoseDetailsScreenState extends State<GlucoseDetailsScreen> {
             const SizedBox(height: 16),
             _addReadingButton(),
             const SizedBox(height: 12),
-            AuthButton(
-              text: 'View History',
-              onPressed: () {},
-            ),
+            AuthButton(text: 'View History', onPressed: () {}),
             const SizedBox(height: 24),
           ],
         ),
@@ -105,8 +103,7 @@ class _GlucoseDetailsScreenState extends State<GlucoseDetailsScreen> {
           ),
           const SizedBox(height: 8),
           Container(
-            padding:
-                const EdgeInsets.symmetric(horizontal: 24, vertical: 6),
+            padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 6),
             decoration: BoxDecoration(
               color: Neutral.neutral500,
               borderRadius: BorderRadius.circular(20),
@@ -134,10 +131,7 @@ class _GlucoseDetailsScreenState extends State<GlucoseDetailsScreen> {
       ),
       child: Row(
         mainAxisSize: MainAxisSize.min,
-        children: [
-          _toggleButton('Day', 0),
-          _toggleButton('Week', 1),
-        ],
+        children: [_toggleButton('Day', 0), _toggleButton('Week', 1)],
       ),
     );
   }
@@ -175,9 +169,7 @@ class _GlucoseDetailsScreenState extends State<GlucoseDetailsScreen> {
       child: Center(
         child: Text(
           'No data yet',
-          style: AppTypography.bodyLarge.copyWith(
-            color: Neutral.neutral600,
-          ),
+          style: AppTypography.bodyLarge.copyWith(color: Neutral.neutral600),
         ),
       ),
     );
@@ -228,7 +220,12 @@ class _GlucoseDetailsScreenState extends State<GlucoseDetailsScreen> {
 
   Widget _addReadingButton() {
     return GestureDetector(
-      onTap: () {},
+      onTap: () {
+        Navigator.push(
+          context,
+          MaterialPageRoute(builder: (_) => const AddReadingScreen()),
+        );
+      },
       child: Container(
         padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 16),
         decoration: BoxDecoration(
