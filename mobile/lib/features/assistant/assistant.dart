@@ -7,15 +7,21 @@ class NabadAssistantScreen extends StatefulWidget {
   const NabadAssistantScreen({super.key});
 
   @override
-  State<NabadAssistantScreen> createState() => _NabadAssistantScreenState();
+  State<NabadAssistantScreen> createState() =>
+      _NabadAssistantScreenState();
 }
 
-class _NabadAssistantScreenState extends State<NabadAssistantScreen> {
+class _NabadAssistantScreenState
+    extends State<NabadAssistantScreen> {
   final _messageController = TextEditingController();
-  final ScrollController _scrollController = ScrollController();
+
+  final ScrollController _scrollController =
+      ScrollController();
+
   final ChatbotService _service = ChatbotService();
 
   final List<Map<String, String>> _messages = [];
+
   bool _isLoading = false;
   bool _chatStarted = false;
 
@@ -34,22 +40,34 @@ class _NabadAssistantScreenState extends State<NabadAssistantScreen> {
   }
 
   void _sendMessage([String? text]) async {
-    final message = (text ?? _messageController.text).trim();
+    final message =
+        (text ?? _messageController.text).trim();
+
     if (message.isEmpty) return;
 
     setState(() {
-      _messages.add({'role': 'user', 'text': message});
+      _messages.add({
+        'role': 'user',
+        'text': message,
+      });
+
       _isLoading = true;
       _chatStarted = true;
     });
 
     _messageController.clear();
+
     _scrollToBottom();
 
-    final response = await _service.sendMessage(message);
+    final response =
+        await _service.sendMessage(message);
 
     setState(() {
-      _messages.add({'role': 'bot', 'text': response});
+      _messages.add({
+        'role': 'bot',
+        'text': response,
+      });
+
       _isLoading = false;
     });
 
@@ -57,43 +75,61 @@ class _NabadAssistantScreenState extends State<NabadAssistantScreen> {
   }
 
   void _scrollToBottom() {
-    Future.delayed(const Duration(milliseconds: 300), () {
-      if (_scrollController.hasClients) {
-        _scrollController.animateTo(
-          _scrollController.position.maxScrollExtent,
-          duration: const Duration(milliseconds: 300),
-          curve: Curves.easeOut,
-        );
-      }
-    });
+    Future.delayed(
+      const Duration(milliseconds: 300),
+      () {
+        if (_scrollController.hasClients) {
+          _scrollController.animateTo(
+            _scrollController.position.maxScrollExtent,
+            duration:
+                const Duration(milliseconds: 300),
+            curve: Curves.easeOut,
+          );
+        }
+      },
+    );
   }
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: Neutral.neutral300,
+
       appBar: AppBar(
         backgroundColor: Neutral.neutral300,
         elevation: 0,
         scrolledUnderElevation: 0,
+
         leading: IconButton(
-          icon: const Icon(Icons.arrow_back, color: Neutral.neutral900),
+          icon: const Icon(
+            Icons.arrow_back,
+            color: Neutral.neutral900,
+          ),
+
           onPressed: () => Navigator.pop(context),
         ),
+
         title: Text(
           'Nabad Assistant',
-          style: AppTypography.headingSmall.copyWith(
+
+          style:
+              AppTypography.headingSmall.copyWith(
             color: Neutral.neutral900,
             fontWeight: FontWeight.w700,
           ),
         ),
+
         centerTitle: true,
       ),
+
       body: Column(
         children: [
           Expanded(
-            child: _chatStarted ? _buildChat() : _buildWelcome(),
+            child: _chatStarted
+                ? _buildChat()
+                : _buildWelcome(),
           ),
+
           _inputBar(),
         ],
       ),
@@ -102,39 +138,60 @@ class _NabadAssistantScreenState extends State<NabadAssistantScreen> {
 
   Widget _buildWelcome() {
     return SingleChildScrollView(
-      padding: const EdgeInsets.symmetric(horizontal: 20),
+      padding:
+          const EdgeInsets.symmetric(horizontal: 20),
+
       child: Column(
         children: [
-          const SizedBox(height: 24),
+          const SizedBox(height: 10),
+
           _avatar(),
-          const SizedBox(height: 24),
+
+          const SizedBox(height: 8),
+
           Text(
-            "Hi, I'm your Nabad Assistant",
+            "Hi, I’m your Nabad\nAssistant",
+
             textAlign: TextAlign.center,
-            style: AppTypography.headingLarge.copyWith(
+
+            style:
+                AppTypography.headingLarge.copyWith(
               color: Neutral.neutral900,
               fontWeight: FontWeight.w800,
+              height: 1.2,
             ),
           ),
-          const SizedBox(height: 12),
+
+          const SizedBox(height: 16),
+
           Text(
-            "I'm here to help you understand your vitals, medications, and health insights.\nAsk me anything about your health data or daily wellbeing.",
+            "I'm here to help you understand your vitals,\nmedications, and health insights.\nAsk me anything about your health data or daily\nwellbeing.",
+
             textAlign: TextAlign.center,
-            style: AppTypography.bodyMedium.copyWith(
+
+            style:
+                AppTypography.bodyMedium.copyWith(
               color: Neutral.neutral700,
-              height: 1.5,
+              height: 1.6,
             ),
           ),
-          const SizedBox(height: 32),
+
+          const SizedBox(height: 28),
+
           Text(
             'Some Suggestions',
-            style: AppTypography.bodyLarge.copyWith(
+
+            style:
+                AppTypography.bodyLarge.copyWith(
               color: Neutral.neutral900,
               fontWeight: FontWeight.w700,
             ),
           ),
+
           const SizedBox(height: 16),
+
           _suggestionChips(),
+
           const SizedBox(height: 24),
         ],
       ),
@@ -144,14 +201,26 @@ class _NabadAssistantScreenState extends State<NabadAssistantScreen> {
   Widget _buildChat() {
     return ListView.builder(
       controller: _scrollController,
-      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
-      itemCount: _messages.length + (_isLoading ? 1 : 0),
+
+      padding: const EdgeInsets.symmetric(
+        horizontal: 16,
+        vertical: 12,
+      ),
+
+      itemCount:
+          _messages.length + (_isLoading ? 1 : 0),
+
       itemBuilder: (context, index) {
         if (index == _messages.length) {
           return const Padding(
-            padding: EdgeInsets.only(left: 12, top: 8),
+            padding: EdgeInsets.only(
+              left: 12,
+              top: 8,
+            ),
+
             child: Align(
               alignment: Alignment.centerLeft,
+
               child: CircularProgressIndicator(
                 color: VitalRed.vitalRed500,
                 strokeWidth: 2,
@@ -159,22 +228,46 @@ class _NabadAssistantScreenState extends State<NabadAssistantScreen> {
             ),
           );
         }
+
         final msg = _messages[index];
+
         final isUser = msg['role'] == 'user';
+
         return Align(
-          alignment: isUser ? Alignment.centerRight : Alignment.centerLeft,
+          alignment: isUser
+              ? Alignment.centerRight
+              : Alignment.centerLeft,
+
           child: Container(
-            margin: const EdgeInsets.symmetric(vertical: 6),
-            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
-            constraints: const BoxConstraints(maxWidth: 280),
+            margin:
+                const EdgeInsets.symmetric(vertical: 6),
+
+            padding:
+                const EdgeInsets.symmetric(
+              horizontal: 16,
+              vertical: 12,
+            ),
+
+            constraints:
+                const BoxConstraints(maxWidth: 280),
+
             decoration: BoxDecoration(
-              color: isUser ? VitalRed.vitalRed500 : Neutral.neutral100,
+              color: isUser
+                  ? VitalRed.vitalRed500
+                  : Neutral.neutral100,
+
               borderRadius: BorderRadius.circular(20),
             ),
+
             child: Text(
               msg['text'] ?? '',
-              style: AppTypography.bodyMedium.copyWith(
-                color: isUser ? Colors.white : Neutral.neutral900,
+
+              style:
+                  AppTypography.bodyMedium.copyWith(
+                color: isUser
+                    ? Colors.white
+                    : Neutral.neutral900,
+
                 height: 1.5,
               ),
             ),
@@ -185,108 +278,13 @@ class _NabadAssistantScreenState extends State<NabadAssistantScreen> {
   }
 
   Widget _avatar() {
-    return Container(
-      width: 180,
-      height: 180,
-      decoration: BoxDecoration(
-        color: Neutral.neutral200,
-        shape: BoxShape.circle,
-      ),
-      child: Stack(
-        alignment: Alignment.center,
-        children: [
-          Positioned(
-            bottom: 24,
-            child: Container(
-              width: 110,
-              height: 100,
-              decoration: BoxDecoration(
-                color: Neutral.neutral100,
-                borderRadius: BorderRadius.circular(20),
-              ),
-              child: Center(
-                child: Container(
-                  padding: const EdgeInsets.all(6),
-                  decoration: BoxDecoration(
-                    color: AccentRed.accentRed100,
-                    shape: BoxShape.circle,
-                  ),
-                  child: const Icon(
-                    Icons.favorite,
-                    color: VitalRed.vitalRed500,
-                    size: 24,
-                  ),
-                ),
-              ),
-            ),
-          ),
-          Positioned(
-            top: 30,
-            child: Container(
-              width: 70,
-              height: 70,
-              decoration: const BoxDecoration(
-                color: Color(0xFFF4D5B5),
-                shape: BoxShape.circle,
-              ),
-              child: Stack(
-                alignment: Alignment.center,
-                children: [
-                  Positioned(
-                    top: 0,
-                    child: Container(
-                      width: 70,
-                      height: 30,
-                      decoration: const BoxDecoration(
-                        color: Color(0xFF6B4226),
-                        borderRadius: BorderRadius.only(
-                          topLeft: Radius.circular(35),
-                          topRight: Radius.circular(35),
-                        ),
-                      ),
-                    ),
-                  ),
-                  Positioned(
-                    top: 32,
-                    left: 18,
-                    child: Container(
-                      width: 6,
-                      height: 6,
-                      decoration: const BoxDecoration(
-                        color: Neutral.neutral900,
-                        shape: BoxShape.circle,
-                      ),
-                    ),
-                  ),
-                  Positioned(
-                    top: 32,
-                    right: 18,
-                    child: Container(
-                      width: 6,
-                      height: 6,
-                      decoration: const BoxDecoration(
-                        color: Neutral.neutral900,
-                        shape: BoxShape.circle,
-                      ),
-                    ),
-                  ),
-                ],
-              ),
-            ),
-          ),
-          Positioned(
-            top: 50,
-            left: 18,
-            child: Container(
-              width: 28,
-              height: 28,
-              decoration: const BoxDecoration(
-                color: Color(0xFFF4D5B5),
-                shape: BoxShape.circle,
-              ),
-            ),
-          ),
-        ],
+    return SizedBox(
+      width: 260,
+      height: 260,
+
+      child: Image.asset(
+        'assets/images/assistant.png',
+        fit: BoxFit.contain,
       ),
     );
   }
@@ -296,22 +294,36 @@ class _NabadAssistantScreenState extends State<NabadAssistantScreen> {
       spacing: 10,
       runSpacing: 10,
       alignment: WrapAlignment.center,
-      children: _suggestions.map((s) => _chip(s)).toList(),
+
+      children:
+          _suggestions.map((s) => _chip(s)).toList(),
     );
   }
 
   Widget _chip(String text) {
     return GestureDetector(
       onTap: () => _sendMessage(text),
+
       child: Container(
-        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
+        padding: const EdgeInsets.symmetric(
+          horizontal: 16,
+          vertical: 10,
+        ),
+
         decoration: BoxDecoration(
           color: AccentRed.accentRed100,
           borderRadius: BorderRadius.circular(24),
+
+          border: Border.all(
+            color: VitalRed.vitalRed500.withOpacity(0.2),
+          ),
         ),
+
         child: Text(
           text,
-          style: AppTypography.bodyMedium.copyWith(
+
+          style:
+              AppTypography.bodyMedium.copyWith(
             color: VitalRed.vitalRed500,
             fontWeight: FontWeight.w600,
           ),
@@ -322,48 +334,71 @@ class _NabadAssistantScreenState extends State<NabadAssistantScreen> {
 
   Widget _inputBar() {
     return Container(
-      padding: const EdgeInsets.fromLTRB(16, 12, 16, 24),
+      padding: const EdgeInsets.fromLTRB(
+        16,
+        12,
+        16,
+        24,
+      ),
+
       decoration: BoxDecoration(
         color: Neutral.neutral100,
+
         boxShadow: [
           BoxShadow(
-            color: Neutral.neutral900.withValues(alpha: 0.04),
+            color:
+                Neutral.neutral900.withOpacity(0.04),
+
             blurRadius: 8,
             offset: const Offset(0, -2),
           ),
         ],
       ),
+
       child: Row(
         children: [
           Expanded(
             child: TextField(
               controller: _messageController,
-              style: AppTypography.bodyMedium.copyWith(
+
+              style:
+                  AppTypography.bodyMedium.copyWith(
                 color: Neutral.neutral800,
               ),
+
               decoration: InputDecoration(
-                hintText: 'Message... / أرسل رسالة',
-                hintStyle: AppTypography.bodyMedium.copyWith(
+                hintText:
+                    'Message... / أرسل رسالة',
+
+                hintStyle:
+                    AppTypography.bodyMedium.copyWith(
                   color: Neutral.neutral500,
                 ),
+
                 border: InputBorder.none,
                 enabledBorder: InputBorder.none,
                 focusedBorder: InputBorder.none,
+
                 isDense: true,
                 contentPadding: EdgeInsets.zero,
               ),
+
               onSubmitted: (_) => _sendMessage(),
             ),
           ),
+
           GestureDetector(
             onTap: () => _sendMessage(),
+
             child: Container(
-              width: 40,
-              height: 40,
+              width: 44,
+              height: 44,
+
               decoration: BoxDecoration(
                 color: VitalRed.vitalRed500,
-                borderRadius: BorderRadius.circular(12),
+                borderRadius: BorderRadius.circular(14),
               ),
+
               child: const Icon(
                 Icons.send,
                 color: Colors.white,

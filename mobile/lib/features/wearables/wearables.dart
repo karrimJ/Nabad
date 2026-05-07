@@ -1,4 +1,6 @@
 import 'package:flutter/material.dart';
+import 'package:mobile/features/auth/presentation/components/auth_button.dart';
+import 'package:mobile/features/wearables/connect_wearable_screen.dart';
 import 'package:mobile/theme/app_colors.dart';
 import 'package:mobile/theme/app_typography.dart';
 import 'package:mobile/features/auth/presentation/components/auth_button.dart';
@@ -202,7 +204,7 @@ class WearablesScreen extends StatelessWidget {
           const SizedBox(width: 12),
           Expanded(
             child: Text(
-              'Wearable data is synced automatically and may not be always 100% accurate. Always consult a healthcare professional for medical decisions.',
+              'Wearable data is synced automatically and may not be always 100% accurate.\nAlways consult a healthcare professional for medical decisions.',
               style: AppTypography.bodyMedium.copyWith(
                 color: Neutral.neutral700,
                 height: 1.5,

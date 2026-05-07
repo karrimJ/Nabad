@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-
+import 'register_screen.dart';
 import 'package:mobile/theme/app_colors.dart';
 import 'package:mobile/theme/app_typography.dart';
 
