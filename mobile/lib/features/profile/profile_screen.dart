@@ -1,43 +1,14 @@
 import 'package:flutter/material.dart';
 import 'package:firebase_auth/firebase_auth.dart';
-<<<<<<< HEAD
-
-import 'package:mobile/theme/app_colors.dart';
-import 'package:mobile/theme/app_typography.dart';
-import 'package:mobile/features/caregiver/caregiver_screen.dart';
-
-import '../../routes/app_routes.dart';
-import '../../widgets/main_navigation.dart';
-=======
 import 'package:mobile/theme/app_colors.dart';
 import 'package:mobile/theme/app_typography.dart';
 import 'package:mobile/routes/app_routes.dart';
->>>>>>> cfa1829 (bbb)
 import 'package:mobile/widgets/main_navigation.dart';
 
 class ProfileScreen extends StatelessWidget {
   const ProfileScreen({super.key});
 
   Future<void> _logout(BuildContext context) async {
-<<<<<<< HEAD
-    try {
-      await AuthService().signOut();
-      if (!context.mounted) return;
-      Navigator.pushNamedAndRemoveUntil(
-        context,
-        AppRoutes.login,
-        (route) => false,
-      );
-    } catch (e) {
-      if (!context.mounted) return;
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text('Logout failed: $e'),
-          backgroundColor: VitalRed.vitalRed500,
-        ),
-      );
-    }
-=======
     await FirebaseAuth.instance.signOut();
 
     if (!context.mounted) return;
@@ -57,20 +28,13 @@ class ProfileScreen extends StatelessWidget {
       ),
       (route) => false,
     );
->>>>>>> cfa1829 (bbb)
   }
 
   @override
   Widget build(BuildContext context) {
-<<<<<<< HEAD
-    final profileService = UserProfileService();
-    final fallbackEmail = FirebaseAuth.instance.currentUser?.email ?? '';
-=======
     final user = FirebaseAuth.instance.currentUser;
-
     final displayName = user?.displayName;
     final email = user?.email;
->>>>>>> cfa1829 (bbb)
 
     return Scaffold(
       backgroundColor: Neutral.neutral300,
@@ -79,7 +43,6 @@ class ProfileScreen extends StatelessWidget {
           padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 24),
           child: Column(
             children: [
-              // ── Avatar (UI unchanged) ────────────────────────────────
               Container(
                 width: 110,
                 height: 110,
@@ -94,44 +57,6 @@ class ProfileScreen extends StatelessWidget {
                 ),
               ),
               const SizedBox(height: 16),
-<<<<<<< HEAD
-
-              // ── Live name + email from Firestore / FirebaseAuth ──────
-              StreamBuilder<UserProfileModel?>(
-                stream: profileService.profileStream(),
-                builder: (context, snapshot) {
-                  final profile = snapshot.data;
-
-                  final displayName = (profile?.displayName.isNotEmpty == true)
-                      ? profile!.displayName
-                      : (fallbackEmail.isNotEmpty
-                          ? fallbackEmail.split('@').first
-                          : 'Nabad User');
-
-                  final email = profile?.email.isNotEmpty == true
-                      ? profile!.email
-                      : fallbackEmail;
-
-                  return Column(
-                    children: [
-                      Text(
-                        displayName,
-                        style: AppTypography.headingMedium.copyWith(
-                          color: Neutral.neutral900,
-                          fontWeight: FontWeight.w700,
-                        ),
-                      ),
-                      const SizedBox(height: 4),
-                      Text(
-                        email,
-                        style: AppTypography.bodyMedium.copyWith(
-                          color: Neutral.neutral600,
-                        ),
-                      ),
-                    ],
-                  );
-                },
-=======
               Text(
                 displayName == null || displayName.isEmpty
                     ? 'Nabad User'
@@ -147,9 +72,7 @@ class ProfileScreen extends StatelessWidget {
                 style: AppTypography.bodyMedium.copyWith(
                   color: Neutral.neutral600,
                 ),
->>>>>>> cfa1829 (bbb)
               ),
-
               const SizedBox(height: 32),
               _menuItem(
                 icon: Icons.person_outline,
@@ -176,13 +99,9 @@ class ProfileScreen extends StatelessWidget {
               ),
               const SizedBox(height: 12),
               _logoutItem(
-<<<<<<< HEAD
-                onTap: () => _logout(context),
-=======
                 onTap: () {
                   _logout(context);
                 },
->>>>>>> cfa1829 (bbb)
               ),
             ],
           ),
