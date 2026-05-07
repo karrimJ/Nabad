@@ -3,6 +3,10 @@ import 'package:mobile/theme/app_colors.dart';
 import 'package:mobile/theme/app_typography.dart';
 import 'package:mobile/features/auth/presentation/components/auth_button.dart';
 
+import '../data/vital_type.dart';
+import '../data/vital_reading_model.dart';
+import '../data/vitals_service.dart';
+
 class AddReadingScreen extends StatefulWidget {
   const AddReadingScreen({super.key});
 
@@ -11,34 +15,45 @@ class AddReadingScreen extends StatefulWidget {
 }
 
 class _AddReadingScreenState extends State<AddReadingScreen> {
-  final _valueController = TextEditingController(text: '78');
-  final _dateController = TextEditingController(text: '15 May 2025');
-  final _timeController = TextEditingController(text: '08:30 AM');
-  final _notesController = TextEditingController();
-
-  String _vitalType = 'Heart Rate';
-  final List<String> _vitalTypes = [
-    'Heart Rate',
-    'Blood Pressure',
-    'Temperature',
-    'Glucose',
-    'Oxygen Level',
+  static const _months = [
+    'Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun',
+    'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec',
   ];
 
-  String get _unit {
-    switch (_vitalType) {
-      case 'Heart Rate':
-        return 'bpm';
-      case 'Blood Pressure':
-        return 'mmHg';
-      case 'Temperature':
-        return '°C';
-      case 'Glucose':
-        return 'mg/dl';
-      case 'Oxygen Level':
-        return '%';
-      default:
-        return '';
+  final _valueController = TextEditingController();
+  final _dateController  = TextEditingController();
+  final _timeController  = TextEditingController();
+  final _notesController = TextEditingController();
+
+  final VitalsService _vitalsService = VitalsService();
+
+  /// Display label, e.g. 'Heart Rate'. Mapped to VitalType on save.
+  String _vitalType = VitalType.displayLabels.first;
+
+  /// Backing date and time for the controllers — kept in sync via
+  /// [_pickDate] and [_pickTime] so the saved Timestamp matches what the
+  /// user picked exactly.
+  late DateTime _selectedDate;
+  late TimeOfDay _selectedTime;
+
+  bool _isSaving = false;
+
+  @override
+  void initState() {
+    super.initState();
+    final now = DateTime.now();
+    _selectedDate = DateTime(now.year, now.month, now.day);
+    _selectedTime = TimeOfDay(hour: now.hour, minute: now.minute);
+    _dateController.text = _formatDate(_selectedDate);
+    // _timeController is filled in didChangeDependencies because
+    // TimeOfDay.format(context) needs a BuildContext.
+  }
+
+  @override
+  void didChangeDependencies() {
+    super.didChangeDependencies();
+    if (_timeController.text.isEmpty) {
+      _timeController.text = _selectedTime.format(context);
     }
   }
 
@@ -51,31 +66,26 @@ class _AddReadingScreenState extends State<AddReadingScreen> {
     super.dispose();
   }
 
+  String get _unit =>
+      VitalType.unitFor(VitalType.fromDisplayLabel(_vitalType));
+
+  bool get _isBloodPressure => _vitalType == 'Blood Pressure';
+
+  String _formatDate(DateTime d) =>
+      '${d.day} ${_months[d.month - 1]} ${d.year}';
+
+  // ── Pickers ───────────────────────────────────────────────────────────
   Future<void> _pickDate() async {
     final picked = await showDatePicker(
       context: context,
-      initialDate: DateTime.now(),
+      initialDate: _selectedDate,
       firstDate: DateTime(2000),
       lastDate: DateTime(2100),
     );
     if (picked != null) {
-      const months = [
-        'Jan',
-        'Feb',
-        'Mar',
-        'Apr',
-        'May',
-        'Jun',
-        'Jul',
-        'Aug',
-        'Sep',
-        'Oct',
-        'Nov',
-        'Dec',
-      ];
       setState(() {
-        _dateController.text =
-            '${picked.day} ${months[picked.month - 1]} ${picked.year}';
+        _selectedDate = picked;
+        _dateController.text = _formatDate(picked);
       });
     }
   }
@@ -83,15 +93,108 @@ class _AddReadingScreenState extends State<AddReadingScreen> {
   Future<void> _pickTime() async {
     final picked = await showTimePicker(
       context: context,
-      initialTime: TimeOfDay.now(),
+      initialTime: _selectedTime,
     );
     if (picked != null) {
       setState(() {
+        _selectedTime = picked;
         _timeController.text = picked.format(context);
       });
     }
   }
 
+  // ── Save flow ─────────────────────────────────────────────────────────
+  Future<void> _save() async {
+    final raw = _valueController.text.trim();
+
+    if (raw.isEmpty) {
+      _showMessage('Reading value is required.');
+      return;
+    }
+
+    final type = VitalType.fromDisplayLabel(_vitalType);
+    final unit = VitalType.unitFor(type);
+
+    final recordedAt = DateTime(
+      _selectedDate.year,
+      _selectedDate.month,
+      _selectedDate.day,
+      _selectedTime.hour,
+      _selectedTime.minute,
+    );
+
+    final notes = _notesController.text.trim();
+    final notesOrNull = notes.isEmpty ? null : notes;
+
+    VitalReadingModel reading;
+
+    if (_isBloodPressure) {
+      // Expected format: "120/80" (with optional spaces).
+      final parts = raw.split('/');
+      if (parts.length != 2) {
+        _showMessage('Blood pressure must be entered as "systolic/diastolic", e.g. 120/80.');
+        return;
+      }
+      final sys = double.tryParse(parts[0].trim());
+      final dia = double.tryParse(parts[1].trim());
+      if (sys == null || dia == null || sys <= 0 || dia <= 0) {
+        _showMessage('Both blood pressure values must be positive numbers.');
+        return;
+      }
+
+      reading = VitalReadingModel.bloodPressure(
+        systolic: sys,
+        diastolic: dia,
+        recordedAt: recordedAt,
+        notes: notesOrNull,
+      );
+    } else {
+      final v = double.tryParse(raw);
+      if (v == null || v <= 0) {
+        _showMessage('Reading must be a positive number.');
+        return;
+      }
+
+      reading = VitalReadingModel.singleValue(
+        type: type,
+        value: v,
+        unit: unit,
+        recordedAt: recordedAt,
+        notes: notesOrNull,
+      );
+    }
+
+    setState(() => _isSaving = true);
+
+    try {
+      await _vitalsService.addManualReading(reading);
+
+      if (!mounted) return;
+      _showMessage('Reading saved.', isError: false);
+      Navigator.pop(context);
+    } on VitalsException catch (e) {
+      _showMessage(e.message);
+    } catch (e) {
+      _showMessage('Could not save reading: $e');
+    } finally {
+      if (mounted) {
+        setState(() => _isSaving = false);
+      }
+    }
+  }
+
+  void _showMessage(String message, {bool isError = true}) {
+    if (!mounted) return;
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content: Text(message),
+        backgroundColor:
+            isError ? VitalRed.vitalRed500 : Success.success500,
+      ),
+    );
+  }
+
+  // ── UI builders (UI unchanged) ────────────────────────────────────────
   Widget _label(String text, {bool required = true}) {
     return Padding(
       padding: const EdgeInsets.only(bottom: 8),
@@ -166,7 +269,7 @@ class _AddReadingScreenState extends State<AddReadingScreen> {
                 color: Neutral.neutral800,
               ),
               dropdownColor: Neutral.neutral100,
-              items: _vitalTypes
+              items: VitalType.displayLabels
                   .map((t) => DropdownMenuItem(value: t, child: Text(t)))
                   .toList(),
               onChanged: (val) {
@@ -186,25 +289,27 @@ class _AddReadingScreenState extends State<AddReadingScreen> {
         _label('Reading Value'),
         TextField(
           controller: _valueController,
-          keyboardType: TextInputType.number,
+          // BP needs '/' which the numeric keyboard does not always expose.
+          keyboardType: _isBloodPressure
+              ? TextInputType.text
+              : const TextInputType.numberWithOptions(decimal: true),
           style: AppTypography.bodyMedium.copyWith(color: Neutral.neutral800),
-          decoration:
-              _decoration(
-                suffix: Padding(
-                  padding: const EdgeInsets.only(right: 16),
-                  child: Text(
-                    _unit,
-                    style: AppTypography.bodyMedium.copyWith(
-                      color: Neutral.neutral700,
-                    ),
-                  ),
-                ),
-              ).copyWith(
-                suffixIconConstraints: const BoxConstraints(
-                  minWidth: 0,
-                  minHeight: 0,
+          decoration: _decoration(
+            suffix: Padding(
+              padding: const EdgeInsets.only(right: 16),
+              child: Text(
+                _unit,
+                style: AppTypography.bodyMedium.copyWith(
+                  color: Neutral.neutral700,
                 ),
               ),
+            ),
+          ).copyWith(
+            suffixIconConstraints: const BoxConstraints(
+              minWidth: 0,
+              minHeight: 0,
+            ),
+          ),
         ),
       ],
     );
@@ -218,7 +323,7 @@ class _AddReadingScreenState extends State<AddReadingScreen> {
         TextField(
           controller: _dateController,
           readOnly: true,
-          onTap: _pickDate,
+          onTap: _isSaving ? null : _pickDate,
           style: AppTypography.bodyMedium.copyWith(color: Neutral.neutral800),
           decoration: _decoration(
             suffix: const Icon(
@@ -240,7 +345,7 @@ class _AddReadingScreenState extends State<AddReadingScreen> {
         TextField(
           controller: _timeController,
           readOnly: true,
-          onTap: _pickTime,
+          onTap: _isSaving ? null : _pickTime,
           style: AppTypography.bodyMedium.copyWith(color: Neutral.neutral800),
           decoration: _decoration(
             suffix: const Icon(
@@ -271,7 +376,7 @@ class _AddReadingScreenState extends State<AddReadingScreen> {
 
   Widget _cancelButton() {
     return GestureDetector(
-      onTap: () => Navigator.pop(context),
+      onTap: _isSaving ? null : () => Navigator.pop(context),
       child: Container(
         height: 54,
         alignment: Alignment.center,
@@ -291,6 +396,7 @@ class _AddReadingScreenState extends State<AddReadingScreen> {
     );
   }
 
+  // ── Build ─────────────────────────────────────────────────────────────
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -301,7 +407,7 @@ class _AddReadingScreenState extends State<AddReadingScreen> {
         scrolledUnderElevation: 0,
         leading: IconButton(
           icon: const Icon(Icons.arrow_back, color: Neutral.neutral900),
-          onPressed: () => Navigator.pop(context),
+          onPressed: _isSaving ? null : () => Navigator.pop(context),
         ),
         title: Text(
           'Add Reading',
@@ -338,10 +444,8 @@ class _AddReadingScreenState extends State<AddReadingScreen> {
             child: Column(
               children: [
                 AuthButton(
-                  text: 'Save Reading',
-                  onPressed: () {
-                    Navigator.pop(context);
-                  },
+                  text: _isSaving ? 'Saving...' : 'Save Reading',
+                  onPressed: _isSaving ? () {} : _save,
                 ),
                 const SizedBox(height: 12),
                 _cancelButton(),
