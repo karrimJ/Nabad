@@ -5,6 +5,7 @@ import 'package:mobile/theme/app_typography.dart';
 import 'package:mobile/features/caregiver/caregiver_screen.dart';
 import '../../routes/app_routes.dart';
 import '../../widgets/main_navigation.dart';
+import 'data/user_profile_service.dart';
 
 class ProfileScreen extends StatelessWidget {
   const ProfileScreen({super.key});
@@ -31,9 +32,8 @@ class ProfileScreen extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final user = FirebaseAuth.instance.currentUser;
-    final displayName = user?.displayName;
-    final email = user?.email;
+    final service = UserProfileService();
+    final email = FirebaseAuth.instance.currentUser?.email ?? '';
 
     return Scaffold(
       backgroundColor: Neutral.neutral300,
@@ -56,18 +56,22 @@ class ProfileScreen extends StatelessWidget {
                 ),
               ),
               const SizedBox(height: 16),
-              Text(
-                displayName == null || displayName.isEmpty
-                    ? 'Nabad User'
-                    : displayName,
-                style: AppTypography.headingMedium.copyWith(
-                  color: Neutral.neutral900,
-                  fontWeight: FontWeight.w700,
-                ),
+              StreamBuilder(
+                stream: service.profileStream(),
+                builder: (context, snapshot) {
+                  final name = snapshot.data?.displayName ?? '';
+                  return Text(
+                    name.isEmpty ? 'Nabad User' : name,
+                    style: AppTypography.headingMedium.copyWith(
+                      color: Neutral.neutral900,
+                      fontWeight: FontWeight.w700,
+                    ),
+                  );
+                },
               ),
               const SizedBox(height: 4),
               Text(
-                email ?? 'No email available',
+                email.isEmpty ? 'No email available' : email,
                 style: AppTypography.bodyMedium.copyWith(
                   color: Neutral.neutral600,
                 ),
