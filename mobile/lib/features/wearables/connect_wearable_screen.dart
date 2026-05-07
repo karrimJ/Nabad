@@ -6,6 +6,7 @@ import 'package:mobile/features/wearables/components/Available_Devices_Section.d
 import 'package:mobile/features/wearables/components/InfoBox.dart';
 import 'package:mobile/features/wearables/components/SUPPORTED_DATA.dart';
 import 'package:mobile/features/wearables/components/Permission_Box.dart';
+import '../../routes/app_routes.dart';
 
 class ConnectWearableScreen extends StatelessWidget {
   const ConnectWearableScreen({super.key});
@@ -17,7 +18,15 @@ class ConnectWearableScreen extends StatelessWidget {
       appBar: AppBar(
         backgroundColor: Colors.transparent,
         elevation: 0,
-        leading: const Icon(Icons.arrow_back, color: Colors.black),
+        leading: IconButton(
+          icon: const Icon(Icons.arrow_back, color: Colors.black),
+          onPressed: () {
+            Navigator.pushReplacementNamed(
+              context,
+              AppRoutes.wearables,
+            );
+          },
+        ),
         centerTitle: true,
         title: Text(
           "Connect Wearable",
@@ -27,15 +36,15 @@ class ConnectWearableScreen extends StatelessWidget {
       body: Padding(
         padding: const EdgeInsets.all(16),
         child: ListView(
-          children: const [
+          children: [
             BluetoothCard(),
-            SizedBox(height: 20),
+            const SizedBox(height: 20),
             AvailableDevicesSection(),
-            SizedBox(height: 20),
+            const SizedBox(height: 20),
             InfoBox(),
-            SizedBox(height: 20),
+            const SizedBox(height: 20),
             SupportedDataSection(),
-            SizedBox(height: 20),
+            const SizedBox(height: 20),
             PermissionBox(),
           ],
         ),

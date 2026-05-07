@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:mobile/theme/app_colors.dart';
 import 'package:mobile/theme/app_typography.dart';
 import 'package:mobile/features/auth/presentation/components/auth_button.dart';
+import 'add_manual_reading_screen.dart';
 
 class BloodPressureDetailsScreen extends StatelessWidget {
   const BloodPressureDetailsScreen({super.key});
@@ -47,7 +48,7 @@ class BloodPressureDetailsScreen extends StatelessWidget {
             ),
             const SizedBox(height: 4),
             Text(
-              'Weekly range <120 / <80 mmh',
+              'Weekly range <120 / <80 mmHg',
               style: AppTypography.bodySmall.copyWith(
                 color: Neutral.neutral600,
               ),
@@ -57,7 +58,7 @@ class BloodPressureDetailsScreen extends StatelessWidget {
             const SizedBox(height: 16),
             _statusBanner(),
             const SizedBox(height: 16),
-            _addReadingButton(),
+            _addReadingButton(context),
             const SizedBox(height: 12),
             AuthButton(
               text: 'View History',
@@ -107,8 +108,7 @@ class BloodPressureDetailsScreen extends StatelessWidget {
           ),
           const SizedBox(height: 8),
           Container(
-            padding:
-                const EdgeInsets.symmetric(horizontal: 24, vertical: 6),
+            padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 6),
             decoration: BoxDecoration(
               color: VitalRed.vitalRed500,
               borderRadius: BorderRadius.circular(20),
@@ -124,7 +124,7 @@ class BloodPressureDetailsScreen extends StatelessWidget {
           ),
           const SizedBox(height: 12),
           Text(
-            'Normal Range: <120 / <80 mmh',
+            'Normal Range: <120 / <80 mmHg',
             style: AppTypography.bodyMedium.copyWith(
               color: Neutral.neutral800,
               fontWeight: FontWeight.w500,
@@ -270,7 +270,7 @@ class BloodPressureDetailsScreen extends StatelessWidget {
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Text(
-                  'Your heart rate is within the healthy range.',
+                  'Your blood pressure is higher than the normal range.',
                   style: AppTypography.bodyMedium.copyWith(
                     color: Neutral.neutral900,
                     fontWeight: FontWeight.w600,
@@ -278,7 +278,7 @@ class BloodPressureDetailsScreen extends StatelessWidget {
                 ),
                 const SizedBox(height: 2),
                 Text(
-                  'Keep maintaining an active lifestyle.',
+                  'Consider resting and checking again later.',
                   style: AppTypography.bodySmall.copyWith(
                     color: Neutral.neutral700,
                   ),
@@ -291,9 +291,16 @@ class BloodPressureDetailsScreen extends StatelessWidget {
     );
   }
 
-  Widget _addReadingButton() {
+  Widget _addReadingButton(BuildContext context) {
     return GestureDetector(
-      onTap: () {},
+      onTap: () {
+        Navigator.push(
+          context,
+          MaterialPageRoute(
+            builder: (_) => const AddReadingScreen(),
+          ),
+        );
+      },
       child: Container(
         padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 16),
         decoration: BoxDecoration(
@@ -373,6 +380,7 @@ class _BarChartPainter extends CustomPainter {
       Offset(leftPad, topPad + chartHeight),
       separatorPaint,
     );
+
     canvas.drawLine(
       Offset(size.width - rightPad, topPad),
       Offset(size.width - rightPad, topPad + chartHeight),
@@ -393,23 +401,38 @@ class _BarChartPainter extends CustomPainter {
       final bottomY = topPad + chartHeight;
 
       final sysRect = RRect.fromRectAndRadius(
-        Rect.fromLTWH(cx - barWidth / 2, sysTopY, barWidth, bottomY - sysTopY),
+        Rect.fromLTWH(
+          cx - barWidth / 2,
+          sysTopY,
+          barWidth,
+          bottomY - sysTopY,
+        ),
         const Radius.circular(10),
       );
+
       canvas.drawRRect(sysRect, sysPaint);
 
-
       final diaRect = RRect.fromRectAndRadius(
-        Rect.fromLTWH(cx - barWidth / 2, diaTopY, barWidth, bottomY - diaTopY),
+        Rect.fromLTWH(
+          cx - barWidth / 2,
+          diaTopY,
+          barWidth,
+          bottomY - diaTopY,
+        ),
         const Radius.circular(10),
       );
+
       canvas.drawRRect(diaRect, diaPaint);
 
       final tp = TextPainter(
         text: TextSpan(text: days[i], style: textStyle),
         textDirection: TextDirection.ltr,
       )..layout();
-      tp.paint(canvas, Offset(cx - tp.width / 2, size.height - bottomPad + 8));
+
+      tp.paint(
+        canvas,
+        Offset(cx - tp.width / 2, size.height - bottomPad + 8),
+      );
     }
   }
 

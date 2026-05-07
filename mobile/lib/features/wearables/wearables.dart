@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:mobile/theme/app_colors.dart';
 import 'package:mobile/theme/app_typography.dart';
 import 'package:mobile/features/auth/presentation/components/auth_button.dart';
+import '../../routes/app_routes.dart';
 
 class WearablesScreen extends StatelessWidget {
   const WearablesScreen({super.key});
@@ -15,8 +16,17 @@ class WearablesScreen extends StatelessWidget {
         elevation: 0,
         scrolledUnderElevation: 0,
         leading: IconButton(
-          icon: const Icon(Icons.arrow_back, color: Neutral.neutral900),
-          onPressed: () => Navigator.pop(context),
+          icon: const Icon(
+            Icons.arrow_back,
+            color: Neutral.neutral900,
+          ),
+          onPressed: () {
+            Navigator.pushNamedAndRemoveUntil(
+              context,
+              AppRoutes.home,
+              (route) => false,
+            );
+          },
         ),
         title: Text(
           'Wearables',
@@ -32,7 +42,7 @@ class WearablesScreen extends StatelessWidget {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            _connectCard(),
+            _connectCard(context),
             const SizedBox(height: 24),
             Text(
               'Supported Data',
@@ -52,7 +62,7 @@ class WearablesScreen extends StatelessWidget {
     );
   }
 
-  Widget _connectCard() {
+  Widget _connectCard(BuildContext context) {
     return Container(
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
@@ -92,7 +102,7 @@ class WearablesScreen extends StatelessWidget {
                     ),
                     const SizedBox(height: 4),
                     Text(
-                      'Connect a device to sync your\nhealth data automaticallt.',
+                      'Connect a device to sync your\nhealth data automatically.',
                       style: AppTypography.bodySmall.copyWith(
                         color: Neutral.neutral700,
                         height: 1.4,
@@ -106,7 +116,12 @@ class WearablesScreen extends StatelessWidget {
           const SizedBox(height: 16),
           AuthButton(
             text: 'Connect Wearable',
-            onPressed: () {},
+            onPressed: () {
+              Navigator.pushNamed(
+                context,
+                AppRoutes.connectWearable,
+              );
+            },
           ),
         ],
       ),

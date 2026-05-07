@@ -7,10 +7,16 @@ import 'package:mobile/routes/app_routes.dart';
 class HomeScreen extends StatelessWidget {
   const HomeScreen({super.key});
 
+  void _goTo(BuildContext context, String routeName) {
+    Navigator.pop(context);
+    Navigator.pushNamed(context, routeName);
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: Neutral.neutral300,
+      drawer: _homeDrawer(context),
       body: SafeArea(
         child: Stack(
           children: [
@@ -19,6 +25,7 @@ class HomeScreen extends StatelessWidget {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
+                  const SizedBox(height: 8),
                   _greetingCard(),
                   const SizedBox(height: 24),
                   _sectionTitle("Today's Progress"),
@@ -31,13 +38,29 @@ class HomeScreen extends StatelessWidget {
                   const SizedBox(height: 12),
                   _bloodPressureCard(context),
                   const SizedBox(height: 24),
-                  
-                  const SizedBox(height: 24),
                   _sectionTitle("Today's Medications"),
                   const SizedBox(height: 12),
                   _medicationCard(context),
                   const SizedBox(height: 80),
                 ],
+              ),
+            ),
+            Positioned(
+              right: 16,
+              top: 12,
+              child: Builder(
+                builder: (context) {
+                  return IconButton(
+                    icon: const Icon(
+                      Icons.menu,
+                      color: Neutral.neutral900,
+                      size: 28,
+                    ),
+                    onPressed: () {
+                      Scaffold.of(context).openDrawer();
+                    },
+                  );
+                },
               ),
             ),
             Positioned(
@@ -50,6 +73,117 @@ class HomeScreen extends StatelessWidget {
       ),
     );
   }
+
+  Widget _homeDrawer(BuildContext context) {
+  return Drawer(
+    child: SafeArea(
+      child: Column(
+        children: [
+          const SizedBox(height: 24),
+          CircleAvatar(
+            radius: 36,
+            backgroundColor: VitalRed.vitalRed500,
+            child: const Icon(
+              Icons.favorite,
+              color: Colors.white,
+              size: 34,
+            ),
+          ),
+          const SizedBox(height: 12),
+          Text(
+            'Nabad',
+            style: AppTypography.headingMedium.copyWith(
+              color: Neutral.neutral900,
+              fontWeight: FontWeight.w700,
+            ),
+          ),
+          const SizedBox(height: 24),
+
+          ListTile(
+            leading: const Icon(Icons.person),
+            title: const Text('My Profile'),
+            onTap: () {
+              _goTo(context, AppRoutes.profile);
+            },
+          ),
+
+          ExpansionTile(
+            leading: const Icon(Icons.history),
+            title: const Text('Vital History'),
+            childrenPadding: const EdgeInsets.only(left: 24),
+            children: [
+              ListTile(
+                leading: const Icon(Icons.favorite, size: 20),
+                title: const Text('Heart Rate'),
+                onTap: () {
+                  _goTo(context, AppRoutes.heartRateHistory);
+                },
+              ),
+              ListTile(
+                leading: const Icon(Icons.air, size: 20),
+                title: const Text('Oxygen Level'),
+                onTap: () {
+                  _goTo(context, AppRoutes.oxygenHistory);
+                },
+              ),
+              ListTile(
+                leading: const Icon(Icons.thermostat, size: 20),
+                title: const Text('Temperature'),
+                onTap: () {
+                  _goTo(context, AppRoutes.temperatureHistory);
+                },
+              ),
+              ListTile(
+                leading: const Icon(Icons.bloodtype, size: 20),
+                title: const Text('Glucose Level'),
+                onTap: () {
+                  _goTo(context, AppRoutes.glucoseHistory);
+                },
+              ),
+              ListTile(
+                leading: const Icon(Icons.monitor_heart, size: 20),
+                title: const Text('Blood Pressure'),
+                onTap: () {
+                  _goTo(context, AppRoutes.bloodPressureHistory);
+                },
+              ),
+            ],
+          ),
+
+          ListTile(
+            leading: const Icon(Icons.medication),
+            title: const Text('Medications'),
+            onTap: () {
+              _goTo(context, AppRoutes.medications);
+            },
+          ),
+
+          ListTile(
+            leading: const Icon(Icons.watch),
+            title: const Text('Wearables'),
+            onTap: () {
+              _goTo(context, AppRoutes.wearables);
+            },
+          ),
+
+          ListTile(
+            leading: const Icon(
+              Icons.emergency,
+              color: Colors.red,
+            ),
+            title: const Text(
+              'Emergency',
+              style: TextStyle(color: Colors.red),
+            ),
+            onTap: () {
+              _goTo(context, AppRoutes.emergency);
+            },
+          ),
+        ],
+      ),
+    ),
+  );
+}
 
   Widget _greetingCard() {
     return Container(
@@ -136,8 +270,7 @@ class HomeScreen extends StatelessWidget {
           children: [
             Expanded(
               child: GestureDetector(
-                onTap: () =>
-                    Navigator.pushNamed(context, AppRoutes.heartRate),
+                onTap: () => Navigator.pushNamed(context, AppRoutes.heartRate),
                 child: _vitalCard(
                   icon: Icons.favorite,
                   iconColor: VitalRed.vitalRed500,
@@ -152,8 +285,7 @@ class HomeScreen extends StatelessWidget {
             const SizedBox(width: 12),
             Expanded(
               child: GestureDetector(
-                onTap: () =>
-                    Navigator.pushNamed(context, AppRoutes.oxygen),
+                onTap: () => Navigator.pushNamed(context, AppRoutes.oxygen),
                 child: _vitalCard(
                   icon: Icons.air,
                   iconColor: VitalRed.vitalRed500,
@@ -172,8 +304,7 @@ class HomeScreen extends StatelessWidget {
           children: [
             Expanded(
               child: GestureDetector(
-                onTap: () =>
-                    Navigator.pushNamed(context, AppRoutes.temperature),
+                onTap: () => Navigator.pushNamed(context, AppRoutes.temperature),
                 child: _vitalCard(
                   icon: Icons.thermostat,
                   iconColor: VitalRed.vitalRed500,
@@ -188,8 +319,7 @@ class HomeScreen extends StatelessWidget {
             const SizedBox(width: 12),
             Expanded(
               child: GestureDetector(
-                onTap: () =>
-                    Navigator.pushNamed(context, AppRoutes.glucose),
+                onTap: () => Navigator.pushNamed(context, AppRoutes.glucose),
                 child: _vitalCard(
                   icon: Icons.science,
                   iconColor: Neutral.neutral600,
@@ -360,7 +490,9 @@ class HomeScreen extends StatelessWidget {
                   const SizedBox(height: 8),
                   Container(
                     padding: const EdgeInsets.symmetric(
-                        horizontal: 10, vertical: 4),
+                      horizontal: 10,
+                      vertical: 4,
+                    ),
                     decoration: BoxDecoration(
                       color: Success.success100,
                       borderRadius: BorderRadius.circular(20),
@@ -405,6 +537,7 @@ class HomeScreen extends StatelessWidget {
 
 class _ProgressPainter extends CustomPainter {
   final double progress;
+
   _ProgressPainter(this.progress);
 
   @override
@@ -436,6 +569,7 @@ class _ProgressPainter extends CustomPainter {
   }
 
   @override
-  bool shouldRepaint(covariant _ProgressPainter oldDelegate) =>
-      oldDelegate.progress != progress;
+  bool shouldRepaint(covariant _ProgressPainter oldDelegate) {
+    return oldDelegate.progress != progress;
+  }
 }

@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:mobile/theme/app_colors.dart';
 import 'package:mobile/theme/app_typography.dart';
+import '../../../widgets/main_navigation.dart';
+import 'edit_medical_id_screen.dart';
 
 class MedicalIdScreen extends StatelessWidget {
   const MedicalIdScreen({super.key});
@@ -15,7 +17,15 @@ class MedicalIdScreen extends StatelessWidget {
         scrolledUnderElevation: 0,
         leading: IconButton(
           icon: const Icon(Icons.arrow_back, color: Neutral.neutral900),
-          onPressed: () => Navigator.pop(context),
+          onPressed: () {
+            Navigator.pushAndRemoveUntil(
+              context,
+              MaterialPageRoute(
+                builder: (_) => const MainNavigation(),
+              ),
+              (route) => false,
+            );
+          },
         ),
         title: Text(
           'Medical ID',
@@ -197,7 +207,14 @@ class MedicalIdScreen extends StatelessWidget {
 
   Widget _editButton(BuildContext context) {
     return GestureDetector(
-      onTap: () {},
+      onTap: () {
+        Navigator.push(
+          context,
+          MaterialPageRoute(
+            builder: (_) => const EditMedicalIdScreen(),
+          ),
+        );
+      },
       child: Container(
         height: 54,
         alignment: Alignment.center,

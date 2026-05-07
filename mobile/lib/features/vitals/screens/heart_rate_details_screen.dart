@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:mobile/theme/app_colors.dart';
 import 'package:mobile/theme/app_typography.dart';
 import 'package:mobile/features/auth/presentation/components/auth_button.dart';
+import 'add_manual_reading_screen.dart';
 
 class HeartRateDetailsScreen extends StatelessWidget {
   const HeartRateDetailsScreen({super.key});
@@ -57,12 +58,9 @@ class HeartRateDetailsScreen extends StatelessWidget {
             const SizedBox(height: 16),
             _statusBanner(),
             const SizedBox(height: 16),
-            _addReadingButton(),
+            _addReadingButton(context),
             const SizedBox(height: 12),
-            AuthButton(
-              text: 'View History',
-              onPressed: () {},
-            ),
+            AuthButton(text: 'View History', onPressed: () {}),
             const SizedBox(height: 24),
           ],
         ),
@@ -107,8 +105,7 @@ class HeartRateDetailsScreen extends StatelessWidget {
           ),
           const SizedBox(height: 8),
           Container(
-            padding:
-                const EdgeInsets.symmetric(horizontal: 24, vertical: 6),
+            padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 6),
             decoration: BoxDecoration(
               color: Success.success500,
               borderRadius: BorderRadius.circular(20),
@@ -133,9 +130,7 @@ class HeartRateDetailsScreen extends StatelessWidget {
           const SizedBox(height: 4),
           Text(
             'Last updated: Today at 09:12',
-            style: AppTypography.bodySmall.copyWith(
-              color: Neutral.neutral600,
-            ),
+            style: AppTypography.bodySmall.copyWith(color: Neutral.neutral600),
           ),
         ],
       ),
@@ -155,11 +150,7 @@ class HeartRateDetailsScreen extends StatelessWidget {
             height: 220,
             child: CustomPaint(
               size: const Size(double.infinity, 220),
-              painter: _RangeBarPainter(
-                days: _days,
-                high: _high,
-                low: _low,
-              ),
+              painter: _RangeBarPainter(days: _days, high: _high, low: _low),
             ),
           ),
           const SizedBox(height: 8),
@@ -213,11 +204,7 @@ class HeartRateDetailsScreen extends StatelessWidget {
               shape: BoxShape.circle,
               color: Success.success500,
             ),
-            child: const Icon(
-              Icons.favorite,
-              color: Colors.white,
-              size: 18,
-            ),
+            child: const Icon(Icons.favorite, color: Colors.white, size: 18),
           ),
           const SizedBox(width: 12),
           Expanded(
@@ -246,9 +233,16 @@ class HeartRateDetailsScreen extends StatelessWidget {
     );
   }
 
-  Widget _addReadingButton() {
+  Widget _addReadingButton(BuildContext context) {
     return GestureDetector(
-      onTap: () {},
+      onTap: () {
+        Navigator.push(
+          context,
+          MaterialPageRoute(
+            builder: (_) => const AddReadingScreen(),
+          ),
+        );
+      },
       child: Container(
         padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 16),
         decoration: BoxDecoration(
@@ -278,11 +272,7 @@ class _RangeBarPainter extends CustomPainter {
   final List<int> high;
   final List<int> low;
 
-  _RangeBarPainter({
-    required this.days,
-    required this.high,
-    required this.low,
-  });
+  _RangeBarPainter({required this.days, required this.high, required this.low});
 
   @override
   void paint(Canvas canvas, Size size) {
@@ -304,7 +294,6 @@ class _RangeBarPainter extends CustomPainter {
       ..color = Neutral.neutral400
       ..strokeWidth = 1;
 
-    // Vertical separator lines between days
     for (var i = 1; i < days.length; i++) {
       final x = leftPad + slot * i;
       canvas.drawLine(
@@ -313,11 +302,13 @@ class _RangeBarPainter extends CustomPainter {
         separatorPaint,
       );
     }
+
     canvas.drawLine(
       Offset(leftPad, topPad),
       Offset(leftPad, topPad + chartHeight),
       separatorPaint,
     );
+
     canvas.drawLine(
       Offset(size.width - rightPad, topPad),
       Offset(size.width - rightPad, topPad + chartHeight),
@@ -331,7 +322,6 @@ class _RangeBarPainter extends CustomPainter {
       fontWeight: FontWeight.w500,
     );
 
-    // Bars: gradient from light red (top) to dark red (bottom)
     for (var i = 0; i < days.length; i++) {
       final cx = leftPad + slot * i + slot / 2;
 
@@ -363,14 +353,18 @@ class _RangeBarPainter extends CustomPainter {
 
       final paint = Paint()..shader = gradient.createShader(rect);
 
-      final rrect = RRect.fromRectAndRadius(rect, const Radius.circular(10));
+      final rrect = RRect.fromRectAndRadius(
+        rect,
+        const Radius.circular(10),
+      );
+
       canvas.drawRRect(rrect, paint);
 
-      // Day label
       final tp = TextPainter(
         text: TextSpan(text: days[i], style: textStyle),
         textDirection: TextDirection.ltr,
       )..layout();
+
       tp.paint(
         canvas,
         Offset(cx - tp.width / 2, size.height - bottomPad + 8),
