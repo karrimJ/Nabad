@@ -1,54 +1,105 @@
 import 'package:flutter/material.dart';
 import 'package:mobile/theme/app_colors.dart';
+import '../data/vitals_service.dart';
+import '../data/vital_type.dart';
 import 'vital_history_template.dart';
 
 class HeartRateHistoryScreen extends StatelessWidget {
   const HeartRateHistoryScreen({super.key});
 
+  String _formatTime(DateTime dt) {
+    final now = DateTime.now();
+    final today = DateTime(now.year, now.month, now.day);
+    final yesterday = today.subtract(const Duration(days: 1));
+    final date = DateTime(dt.year, dt.month, dt.day);
+
+    final hour = dt.hour > 12 ? dt.hour - 12 : dt.hour == 0 ? 12 : dt.hour;
+    final minute = dt.minute.toString().padLeft(2, '0');
+    final period = dt.hour >= 12 ? 'PM' : 'AM';
+    final time = '$hour:$minute $period';
+
+    if (date == today) return 'Today, $time';
+    if (date == yesterday) return 'Yesterday, $time';
+
+    const months = [
+      'Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun',
+      'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'
+    ];
+    return '${months[dt.month - 1]} ${dt.day}, $time';
+  }
+
   @override
   Widget build(BuildContext context) {
-    return VitalHistoryTemplate(
-      title: 'Heart Rate History',
-      icon: Icons.favorite,
-      accentColor: VitalRed.vitalRed500,
-      yAxisLabels: const ['90', '80', '70', '50'],
-      periodData: const {
-        'Day': VitalPeriodData(
-          points: [76, 82, 78, 80, 79, 84, 77],
-          labels: ['6A', '8A', '10A', '12P', '2P', '4P', '6P'],
-          lowest: '76 bpm',
-          average: '79 bpm',
-          highest: '84 bpm',
-        ),
-        'Week': VitalPeriodData(
-          points: [76, 83, 75, 78, 78, 80, 75],
-          labels: ['Mo', 'Tu', 'We', 'Th', 'Fr', 'Sa', 'Su'],
-          lowest: '76 bpm',
-          average: '79 bpm',
-          highest: '84 bpm',
-        ),
-        'Month': VitalPeriodData(
-          points: [78, 80, 76, 82, 79, 81, 77],
-          labels: ['W1', 'W2', 'W3', 'W4', 'W5', 'W6', 'W7'],
-          lowest: '76 bpm',
-          average: '79 bpm',
-          highest: '82 bpm',
-        ),
-        'Year': VitalPeriodData(
-          points: [77, 79, 80, 78, 82, 81, 79],
-          labels: ['Ja', 'Fe', 'Mr', 'Ap', 'My', 'Jn', 'Jl'],
-          lowest: '77 bpm',
-          average: '79 bpm',
-          highest: '82 bpm',
-        ),
+    final service = VitalsService();
+
+    return StreamBuilder(
+      stream: service.readingsStream(type: VitalType.heartRate, limit: 20),
+      builder: (context, snapshot) {
+        final readings = snapshot.data ?? [];
+
+        final recentReadings = readings.map((r) => VitalReadingItem(
+          value: '${(r.value ?? 0).toStringAsFixed(0)} bpm',
+          time: _formatTime(r.recordedAt),
+        )).toList();
+
+       final List<double> values = readings.map((r) => r.value as double).toList();
+
+        final lowest = values.isEmpty
+            ? '--'
+            : '${values.reduce((a, b) => a < b ? a : b).toStringAsFixed(0)} bpm';
+        final highest = values.isEmpty
+            ? '--'
+            : '${values.reduce((a, b) => a > b ? a : b).toStringAsFixed(0)} bpm';
+        final average = values.isEmpty
+            ? '--'
+            : '${(values.reduce((a, b) => a + b) / values.length).toStringAsFixed(0)} bpm';
+
+       final List<double> displayPoints = values.isEmpty
+    ? [76.0, 83.0, 75.0, 78.0, 78.0, 80.0, 75.0]
+    : List<double>.from((values.length > 7 ? values.sublist(0, 7) : values).reversed);
+
+        final weekLabels = ['Mo', 'Tu', 'We', 'Th', 'Fr', 'Sa', 'Su'];
+
+        return VitalHistoryTemplate(
+          title: 'Heart Rate History',
+          icon: Icons.favorite,
+          accentColor: VitalRed.vitalRed500,
+          yAxisLabels: const ['90', '80', '70', '50'],
+          periodData: {
+            'Day': VitalPeriodData(
+              points: displayPoints,
+              labels: weekLabels,
+              lowest: lowest,
+              average: average,
+              highest: highest,
+            ),
+            'Week': VitalPeriodData(
+              points: displayPoints,
+              labels: weekLabels,
+              lowest: lowest,
+              average: average,
+              highest: highest,
+            ),
+            'Month': VitalPeriodData(
+              points: displayPoints,
+              labels: weekLabels,
+              lowest: lowest,
+              average: average,
+              highest: highest,
+            ),
+            'Year': VitalPeriodData(
+              points: displayPoints,
+              labels: weekLabels,
+              lowest: lowest,
+              average: average,
+              highest: highest,
+            ),
+          },
+          recentReadings: recentReadings.isEmpty
+              ? const [VitalReadingItem(value: 'No readings yet', time: '')]
+              : recentReadings,
+        );
       },
-      recentReadings: const [
-        VitalReadingItem(value: '78 bpm', time: 'Today, 09:12'),
-        VitalReadingItem(value: '82 bpm', time: 'Yesterday, 08:30 AM'),
-        VitalReadingItem(value: '76 bpm', time: 'May 13, 07:45 PM'),
-        VitalReadingItem(value: '80 bpm', time: 'May 12, 10:10 AM'),
-        VitalReadingItem(value: '79 bpm', time: 'May 11, 08:45 AM'),
-      ],
     );
   }
 }

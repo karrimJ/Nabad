@@ -1,54 +1,108 @@
 import 'package:flutter/material.dart';
 import 'package:mobile/theme/app_colors.dart';
+import '../data/vitals_service.dart';
+import '../data/vital_type.dart';
 import 'vital_history_template.dart';
 
 class OxygenHistoryScreen extends StatelessWidget {
   const OxygenHistoryScreen({super.key});
 
+  String _formatTime(DateTime dt) {
+    final now = DateTime.now();
+    final today = DateTime(now.year, now.month, now.day);
+    final yesterday = today.subtract(const Duration(days: 1));
+    final date = DateTime(dt.year, dt.month, dt.day);
+
+    final hour = dt.hour > 12 ? dt.hour - 12 : dt.hour == 0 ? 12 : dt.hour;
+    final minute = dt.minute.toString().padLeft(2, '0');
+    final period = dt.hour >= 12 ? 'PM' : 'AM';
+    final time = '$hour:$minute $period';
+
+    if (date == today) return 'Today, $time';
+    if (date == yesterday) return 'Yesterday, $time';
+
+    const months = [
+      'Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun',
+      'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'
+    ];
+    return '${months[dt.month - 1]} ${dt.day}, $time';
+  }
+
   @override
   Widget build(BuildContext context) {
-    return VitalHistoryTemplate(
-      title: 'Oxygen Level History',
-      icon: Icons.air,
-      accentColor: VitalRed.vitalRed500,
-      yAxisLabels: const ['100', '95', '90', '85'],
-      periodData: const {
-        'Day': VitalPeriodData(
-          points: [97, 98, 96, 97, 99, 98, 97],
-          labels: ['6A', '8A', '10A', '12P', '2P', '4P', '6P'],
-          lowest: '96%',
-          average: '97%',
-          highest: '99%',
-        ),
-        'Week': VitalPeriodData(
-          points: [96, 97, 95, 96, 96, 98, 97],
-          labels: ['Mo', 'Tu', 'We', 'Th', 'Fr', 'Sa', 'Su'],
-          lowest: '95%',
-          average: '96%',
-          highest: '98%',
-        ),
-        'Month': VitalPeriodData(
-          points: [95, 96, 97, 96, 98, 97, 96],
-          labels: ['W1', 'W2', 'W3', 'W4', 'W5', 'W6', 'W7'],
-          lowest: '95%',
-          average: '96%',
-          highest: '98%',
-        ),
-        'Year': VitalPeriodData(
-          points: [96, 97, 96, 95, 97, 98, 97],
-          labels: ['Ja', 'Fe', 'Mr', 'Ap', 'My', 'Jn', 'Jl'],
-          lowest: '95%',
-          average: '96%',
-          highest: '98%',
-        ),
+    final service = VitalsService();
+
+    return StreamBuilder(
+      stream: service.readingsStream(type: VitalType.oxygen, limit: 20),
+      builder: (context, snapshot) {
+        final readings = snapshot.data ?? [];
+
+        final recentReadings = readings.map((r) => VitalReadingItem(
+          value: '${(r.value ?? 0).toStringAsFixed(0)}%',
+          time: _formatTime(r.recordedAt),
+        )).toList();
+
+        final List<double> values = readings
+            .map((r) => r.value as double)
+            .toList();
+
+        final lowest = values.isEmpty
+            ? '--'
+            : '${values.reduce((a, b) => a < b ? a : b).toStringAsFixed(0)}%';
+        final highest = values.isEmpty
+            ? '--'
+            : '${values.reduce((a, b) => a > b ? a : b).toStringAsFixed(0)}%';
+        final average = values.isEmpty
+            ? '--'
+            : '${(values.reduce((a, b) => a + b) / values.length).toStringAsFixed(0)}%';
+
+        final List<double> displayPoints = values.isEmpty
+            ? [96.0, 97.0, 95.0, 96.0, 96.0, 98.0, 97.0]
+            : List<double>.from(
+                (values.length > 7 ? values.sublist(0, 7) : values).reversed);
+
+        final weekLabels = ['Mo', 'Tu', 'We', 'Th', 'Fr', 'Sa', 'Su'];
+
+        return VitalHistoryTemplate(
+          title: 'Oxygen Level History',
+          icon: Icons.air,
+          accentColor: VitalRed.vitalRed500,
+          yAxisLabels: const ['100', '95', '90', '85'],
+          periodData: {
+            'Day': VitalPeriodData(
+              points: displayPoints,
+              labels: weekLabels,
+              lowest: lowest,
+              average: average,
+              highest: highest,
+            ),
+            'Week': VitalPeriodData(
+              points: displayPoints,
+              labels: weekLabels,
+              lowest: lowest,
+              average: average,
+              highest: highest,
+            ),
+            'Month': VitalPeriodData(
+              points: displayPoints,
+              labels: weekLabels,
+              lowest: lowest,
+              average: average,
+              highest: highest,
+            ),
+            'Year': VitalPeriodData(
+              points: displayPoints,
+              labels: weekLabels,
+              lowest: lowest,
+              average: average,
+              highest: highest,
+            ),
+          },
+          recentReadings: recentReadings.isEmpty
+              ? const [VitalReadingItem(value: 'No readings yet', time: '')]
+              : recentReadings,
+        );
       },
-      recentReadings: const [
-        VitalReadingItem(value: '97%', time: 'Today, 09:12'),
-        VitalReadingItem(value: '96%', time: 'Yesterday, 08:30 AM'),
-        VitalReadingItem(value: '95%', time: 'May 13, 07:45 PM'),
-        VitalReadingItem(value: '98%', time: 'May 12, 10:10 AM'),
-        VitalReadingItem(value: '94%', time: 'May 11, 08:45 AM'),
-      ],
     );
   }
 }

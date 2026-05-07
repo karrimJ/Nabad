@@ -1,54 +1,107 @@
 import 'package:flutter/material.dart';
 import 'package:mobile/theme/app_colors.dart';
+import '../data/vitals_service.dart';
+import '../data/vital_type.dart';
 import 'vital_history_template.dart';
 
 class TemperatureHistoryScreen extends StatelessWidget {
   const TemperatureHistoryScreen({super.key});
 
+  String _formatTime(DateTime dt) {
+    final now = DateTime.now();
+    final today = DateTime(now.year, now.month, now.day);
+    final yesterday = today.subtract(const Duration(days: 1));
+    final date = DateTime(dt.year, dt.month, dt.day);
+
+    final hour = dt.hour > 12 ? dt.hour - 12 : dt.hour == 0 ? 12 : dt.hour;
+    final minute = dt.minute.toString().padLeft(2, '0');
+    final period = dt.hour >= 12 ? 'PM' : 'AM';
+    final time = '$hour:$minute $period';
+
+    if (date == today) return 'Today, $time';
+    if (date == yesterday) return 'Yesterday, $time';
+
+    const months = [
+      'Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun',
+      'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'
+    ];
+    return '${months[dt.month - 1]} ${dt.day}, $time';
+  }
+
   @override
   Widget build(BuildContext context) {
-    return VitalHistoryTemplate(
-      title: 'Temperature History',
-      icon: Icons.thermostat,
-      accentColor: VitalRed.vitalRed500,
-      yAxisLabels: const ['38', '37', '36', '35'],
-      periodData: const {
-        'Day': VitalPeriodData(
-          points: [36.5, 36.8, 36.7, 37.0, 36.9, 36.8, 36.6],
-          labels: ['6A', '8A', '10A', '12P', '2P', '4P', '6P'],
-          lowest: '36.5°C',
-          average: '36.8°C',
-          highest: '37.0°C',
-        ),
-        'Week': VitalPeriodData(
-          points: [36.7, 36.9, 36.6, 36.8, 36.8, 37.0, 36.7],
-          labels: ['Mo', 'Tu', 'We', 'Th', 'Fr', 'Sa', 'Su'],
-          lowest: '36.6°C',
-          average: '36.8°C',
-          highest: '37.0°C',
-        ),
-        'Month': VitalPeriodData(
-          points: [36.6, 36.7, 36.9, 36.8, 37.0, 36.9, 36.8],
-          labels: ['W1', 'W2', 'W3', 'W4', 'W5', 'W6', 'W7'],
-          lowest: '36.6°C',
-          average: '36.8°C',
-          highest: '37.0°C',
-        ),
-        'Year': VitalPeriodData(
-          points: [36.8, 36.9, 36.7, 36.8, 36.9, 37.0, 36.8],
-          labels: ['Ja', 'Fe', 'Mr', 'Ap', 'My', 'Jn', 'Jl'],
-          lowest: '36.7°C',
-          average: '36.8°C',
-          highest: '37.0°C',
-        ),
+    final service = VitalsService();
+
+    return StreamBuilder(
+      stream: service.readingsStream(type: VitalType.temperature, limit: 20),
+      builder: (context, snapshot) {
+        final readings = snapshot.data ?? [];
+
+        final recentReadings = readings.map((r) => VitalReadingItem(
+          value: '${(r.value ?? 0).toStringAsFixed(1)} °C',
+          time: _formatTime(r.recordedAt),
+        )).toList();
+
+        final List<double> values = readings
+    .map((r) => (r.value ?? 0.0) as double)
+    .toList();
+        final lowest = values.isEmpty
+            ? '--'
+            : '${values.reduce((a, b) => a < b ? a : b).toStringAsFixed(1)}°C';
+        final highest = values.isEmpty
+            ? '--'
+            : '${values.reduce((a, b) => a > b ? a : b).toStringAsFixed(1)}°C';
+        final average = values.isEmpty
+            ? '--'
+            : '${(values.reduce((a, b) => a + b) / values.length).toStringAsFixed(1)}°C';
+
+        final List<double> displayPoints = values.isEmpty
+            ? [36.7, 36.9, 36.6, 36.8, 36.8, 37.0, 36.7]
+            : List<double>.from(
+                (values.length > 7 ? values.sublist(0, 7) : values).reversed);
+
+        final weekLabels = ['Mo', 'Tu', 'We', 'Th', 'Fr', 'Sa', 'Su'];
+
+        return VitalHistoryTemplate(
+          title: 'Temperature History',
+          icon: Icons.thermostat,
+          accentColor: VitalRed.vitalRed500,
+          yAxisLabels: const ['38', '37', '36', '35'],
+          periodData: {
+            'Day': VitalPeriodData(
+              points: displayPoints,
+              labels: weekLabels,
+              lowest: lowest,
+              average: average,
+              highest: highest,
+            ),
+            'Week': VitalPeriodData(
+              points: displayPoints,
+              labels: weekLabels,
+              lowest: lowest,
+              average: average,
+              highest: highest,
+            ),
+            'Month': VitalPeriodData(
+              points: displayPoints,
+              labels: weekLabels,
+              lowest: lowest,
+              average: average,
+              highest: highest,
+            ),
+            'Year': VitalPeriodData(
+              points: displayPoints,
+              labels: weekLabels,
+              lowest: lowest,
+              average: average,
+              highest: highest,
+            ),
+          },
+          recentReadings: recentReadings.isEmpty
+              ? const [VitalReadingItem(value: 'No readings yet', time: '')]
+              : recentReadings,
+        );
       },
-      recentReadings: const [
-        VitalReadingItem(value: '36.8 °C', time: 'Today, 09:12'),
-        VitalReadingItem(value: '37.0 °C', time: 'Yesterday, 08:30 AM'),
-        VitalReadingItem(value: '36.6 °C', time: 'May 13, 07:45 PM'),
-        VitalReadingItem(value: '36.9 °C', time: 'May 12, 10:10 AM'),
-        VitalReadingItem(value: '36.7 °C', time: 'May 11, 08:45 AM'),
-      ],
     );
   }
 }
