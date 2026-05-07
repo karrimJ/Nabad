@@ -10,9 +10,7 @@ class ProfileScreen extends StatelessWidget {
 
   Future<void> _logout(BuildContext context) async {
     await FirebaseAuth.instance.signOut();
-
     if (!context.mounted) return;
-
     Navigator.pushNamedAndRemoveUntil(
       context,
       AppRoutes.login,
@@ -100,7 +98,12 @@ class ProfileScreen extends StatelessWidget {
               const SizedBox(height: 12),
               _logoutItem(
                 onTap: () {
-                  _logout(context);
+                  Navigator.push(
+                    context,
+                    MaterialPageRoute(
+                      builder: (_) => const CaregiverScreen(),
+                    ),
+                  );
                 },
               ),
             ],
@@ -158,11 +161,7 @@ class ProfileScreen extends StatelessWidget {
         ),
         child: Row(
           children: [
-            const Icon(
-              Icons.logout,
-              color: VitalRed.vitalRed500,
-              size: 22,
-            ),
+            const Icon(Icons.logout, color: VitalRed.vitalRed500, size: 22),
             const SizedBox(width: 12),
             Text(
               'Log Out',
