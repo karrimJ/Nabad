@@ -1,15 +1,43 @@
 import 'package:flutter/material.dart';
+import 'package:firebase_auth/firebase_auth.dart';
+
 import 'package:mobile/theme/app_colors.dart';
 import 'package:mobile/theme/app_typography.dart';
-import '../../routes/app_routes.dart';
-import '../../widgets/main_navigation.dart';
-
 import 'package:mobile/features/caregiver/caregiver_screen.dart';
+
+import '../../routes/app_routes.dart';
+import '../auth/data/auth_service.dart';
+import 'data/user_profile_model.dart';
+import 'data/user_profile_service.dart';
+
 class ProfileScreen extends StatelessWidget {
   const ProfileScreen({super.key});
 
+  Future<void> _logout(BuildContext context) async {
+    try {
+      await AuthService().signOut();
+      if (!context.mounted) return;
+      Navigator.pushNamedAndRemoveUntil(
+        context,
+        AppRoutes.login,
+        (route) => false,
+      );
+    } catch (e) {
+      if (!context.mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text('Logout failed: $e'),
+          backgroundColor: VitalRed.vitalRed500,
+        ),
+      );
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
+    final profileService = UserProfileService();
+    final fallbackEmail = FirebaseAuth.instance.currentUser?.email ?? '';
+
     return Scaffold(
       backgroundColor: Neutral.neutral300,
       body: SafeArea(
@@ -17,6 +45,7 @@ class ProfileScreen extends StatelessWidget {
           padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 24),
           child: Column(
             children: [
+              // ── Avatar (UI unchanged) ────────────────────────────────
               Container(
                 width: 110,
                 height: 110,
@@ -31,20 +60,44 @@ class ProfileScreen extends StatelessWidget {
                 ),
               ),
               const SizedBox(height: 16),
-              Text(
-                'Nabad Developer',
-                style: AppTypography.headingMedium.copyWith(
-                  color: Neutral.neutral900,
-                  fontWeight: FontWeight.w700,
-                ),
+
+              // ── Live name + email from Firestore / FirebaseAuth ──────
+              StreamBuilder<UserProfileModel?>(
+                stream: profileService.profileStream(),
+                builder: (context, snapshot) {
+                  final profile = snapshot.data;
+
+                  final displayName = (profile?.displayName.isNotEmpty == true)
+                      ? profile!.displayName
+                      : (fallbackEmail.isNotEmpty
+                          ? fallbackEmail.split('@').first
+                          : 'Nabad User');
+
+                  final email = profile?.email.isNotEmpty == true
+                      ? profile!.email
+                      : fallbackEmail;
+
+                  return Column(
+                    children: [
+                      Text(
+                        displayName,
+                        style: AppTypography.headingMedium.copyWith(
+                          color: Neutral.neutral900,
+                          fontWeight: FontWeight.w700,
+                        ),
+                      ),
+                      const SizedBox(height: 4),
+                      Text(
+                        email,
+                        style: AppTypography.bodyMedium.copyWith(
+                          color: Neutral.neutral600,
+                        ),
+                      ),
+                    ],
+                  );
+                },
               ),
-              const SizedBox(height: 4),
-              Text(
-                'developer@Nabad.com',
-                style: AppTypography.bodyMedium.copyWith(
-                  color: Neutral.neutral600,
-                ),
-              ),
+
               const SizedBox(height: 32),
               _menuItem(
                 icon: Icons.person_outline,
@@ -88,13 +141,7 @@ class ProfileScreen extends StatelessWidget {
               ),
               const SizedBox(height: 12),
               _logoutItem(
-                onTap: () {
-                  Navigator.pushNamedAndRemoveUntil(
-                    context,
-                    AppRoutes.login,
-                    (route) => false,
-                  );
-                },
+                onTap: () => _logout(context),
               ),
             ],
           ),
