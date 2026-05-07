@@ -4,6 +4,7 @@ import 'package:mobile/theme/app_typography.dart';
 import '../../routes/app_routes.dart';
 import '../../widgets/main_navigation.dart';
 
+import 'package:mobile/features/caregiver/caregiver_screen.dart';
 class ProfileScreen extends StatelessWidget {
   const ProfileScreen({super.key});
 
@@ -16,7 +17,6 @@ class ProfileScreen extends StatelessWidget {
           padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 24),
           child: Column(
             children: [
-              // ── Avatar ───────────────────────────────────────────────
               Container(
                 width: 110,
                 height: 110,
@@ -31,8 +31,6 @@ class ProfileScreen extends StatelessWidget {
                 ),
               ),
               const SizedBox(height: 16),
-
-              // ── Name ─────────────────────────────────────────────────
               Text(
                 'Nabad Developer',
                 style: AppTypography.headingMedium.copyWith(
@@ -41,8 +39,6 @@ class ProfileScreen extends StatelessWidget {
                 ),
               ),
               const SizedBox(height: 4),
-
-              // ── Email ────────────────────────────────────────────────
               Text(
                 'developer@Nabad.com',
                 style: AppTypography.bodyMedium.copyWith(
@@ -50,8 +46,6 @@ class ProfileScreen extends StatelessWidget {
                 ),
               ),
               const SizedBox(height: 32),
-
-              // ── Menu items ───────────────────────────────────────────
               _menuItem(
                 icon: Icons.person_outline,
                 label: 'My Profile',
@@ -64,9 +58,9 @@ class ProfileScreen extends StatelessWidget {
                 icon: Icons.list_alt_outlined,
                 label: 'My Vitals',
                 onTap: () {
-                  Navigator.pushAndRemoveUntil(
+                  Navigator.pushNamedAndRemoveUntil(
                     context,
-                    MaterialPageRoute(builder: (_) => const MainNavigation()),
+                    AppRoutes.home,
                     (route) => false,
                   );
                 },
@@ -77,6 +71,19 @@ class ProfileScreen extends StatelessWidget {
                 label: 'Notifications',
                 onTap: () {
                   Navigator.pushNamed(context, AppRoutes.notifications);
+                },
+              ),
+              const SizedBox(height: 12),
+              _menuItem(
+                icon: Icons.family_restroom,
+                label: 'Family & Caregiver',
+                onTap: () {
+                  Navigator.push(
+                    context,
+                    MaterialPageRoute(
+                      builder: (_) => const CaregiverScreen(),
+                    ),
+                  );
                 },
               ),
               const SizedBox(height: 12),
@@ -96,7 +103,6 @@ class ProfileScreen extends StatelessWidget {
     );
   }
 
-  // ── Standard menu item (white card with arrow) ──────────────────────────
   Widget _menuItem({
     required IconData icon,
     required String label,
@@ -134,7 +140,6 @@ class ProfileScreen extends StatelessWidget {
     );
   }
 
-  // ── Logout item (red text, no arrow) ────────────────────────────────────
   Widget _logoutItem({required VoidCallback onTap}) {
     return GestureDetector(
       onTap: onTap,
