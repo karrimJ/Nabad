@@ -1,54 +1,115 @@
 import 'package:flutter/material.dart';
 import 'package:mobile/theme/app_colors.dart';
+import '../data/vitals_service.dart';
+import '../data/vital_type.dart';
+import '../data/vital_reading_model.dart';
 import 'vital_history_template.dart';
 
 class BloodPressureHistoryScreen extends StatelessWidget {
   const BloodPressureHistoryScreen({super.key});
 
+  String _formatTime(DateTime dt) {
+    final now = DateTime.now();
+    final today = DateTime(now.year, now.month, now.day);
+    final yesterday = today.subtract(const Duration(days: 1));
+    final date = DateTime(dt.year, dt.month, dt.day);
+
+    final hour = dt.hour > 12 ? dt.hour - 12 : dt.hour == 0 ? 12 : dt.hour;
+    final minute = dt.minute.toString().padLeft(2, '0');
+    final period = dt.hour >= 12 ? 'PM' : 'AM';
+    final time = '$hour:$minute $period';
+
+    if (date == today) return 'Today, $time';
+    if (date == yesterday) return 'Yesterday, $time';
+
+    const months = [
+      'Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun',
+      'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'
+    ];
+    return '${months[dt.month - 1]} ${dt.day}, $time';
+  }
+
   @override
   Widget build(BuildContext context) {
-    return VitalHistoryTemplate(
-      title: 'Blood Pressure History',
-      icon: Icons.monitor_heart,
-      accentColor: VitalRed.vitalRed500,
-      yAxisLabels: const ['150', '130', '110', '90'],
-      periodData: const {
-        'Day': VitalPeriodData(
-          points: [118, 124, 120, 128, 122, 126, 121],
-          labels: ['6A', '8A', '10A', '12P', '2P', '4P', '6P'],
-          lowest: '118/76',
-          average: '123/79',
-          highest: '128/82',
-        ),
-        'Week': VitalPeriodData(
-          points: [120, 126, 118, 124, 122, 128, 121],
-          labels: ['Mo', 'Tu', 'We', 'Th', 'Fr', 'Sa', 'Su'],
-          lowest: '118/76',
-          average: '123/79',
-          highest: '128/82',
-        ),
-        'Month': VitalPeriodData(
-          points: [122, 124, 120, 126, 128, 124, 121],
-          labels: ['W1', 'W2', 'W3', 'W4', 'W5', 'W6', 'W7'],
-          lowest: '120/77',
-          average: '123/79',
-          highest: '128/82',
-        ),
-        'Year': VitalPeriodData(
-          points: [124, 126, 122, 120, 128, 124, 121],
-          labels: ['Ja', 'Fe', 'Mr', 'Ap', 'My', 'Jn', 'Jl'],
-          lowest: '120/77',
-          average: '124/80',
-          highest: '128/82',
-        ),
+    final service = VitalsService();
+
+    return StreamBuilder(
+      stream: service.readingsStream(type: VitalType.bloodPressure, limit: 20),
+      builder: (context, snapshot) {
+        final readings = snapshot.data ?? [];
+
+        final recentReadings = readings.map((r) {
+          final sys = (r.systolic ?? 0).toStringAsFixed(0);
+          final dia = (r.diastolic ?? 0).toStringAsFixed(0);
+          return VitalReadingItem(
+            value: '$sys/$dia mmHg',
+            time: _formatTime(r.recordedAt),
+          );
+        }).toList();
+
+        final systolicValues = readings
+            .map((r) => r.systolic ?? 0.0)
+            .toList();
+
+        final lowest = systolicValues.isEmpty
+            ? '--'
+            : '${systolicValues.reduce((a, b) => a < b ? a : b).toStringAsFixed(0)} mmHg';
+        final highest = systolicValues.isEmpty
+            ? '--'
+            : '${systolicValues.reduce((a, b) => a > b ? a : b).toStringAsFixed(0)} mmHg';
+        final average = systolicValues.isEmpty
+            ? '--'
+            : '${(systolicValues.reduce((a, b) => a + b) / systolicValues.length).toStringAsFixed(0)} mmHg';
+
+        final List<double> displayPoints = systolicValues.isEmpty
+            ? [120.0, 126.0, 118.0, 124.0, 122.0, 128.0, 121.0]
+            : List<double>.from(
+                (systolicValues.length > 7
+                    ? systolicValues.sublist(0, 7)
+                    : systolicValues).reversed);
+
+        final weekLabels = ['Mo', 'Tu', 'We', 'Th', 'Fr', 'Sa', 'Su'];
+
+        return VitalHistoryTemplate(
+          title: 'Blood Pressure History',
+          icon: Icons.monitor_heart,
+          accentColor: VitalRed.vitalRed500,
+          yAxisLabels: const ['150', '130', '110', '90'],
+          periodData: {
+            'Day': VitalPeriodData(
+              points: displayPoints,
+              labels: weekLabels,
+              lowest: lowest,
+              average: average,
+              highest: highest,
+            ),
+            'Week': VitalPeriodData(
+              points: displayPoints,
+              labels: weekLabels,
+              lowest: lowest,
+              average: average,
+              highest: highest,
+            ),
+            'Month': VitalPeriodData(
+              points: displayPoints,
+              labels: weekLabels,
+              lowest: lowest,
+              average: average,
+              highest: highest,
+            ),
+            'Year': VitalPeriodData(
+              points: displayPoints,
+              labels: weekLabels,
+              lowest: lowest,
+              average: average,
+              highest: highest,
+            ),
+          },
+          recentReadings: recentReadings.isEmpty
+              ? const [VitalReadingItem(value: 'No readings yet', time: '')]
+              : recentReadings,
+        );
       },
-      recentReadings: const [
-        VitalReadingItem(value: '122/78 mmHg', time: 'Today, 09:12'),
-        VitalReadingItem(value: '126/80 mmHg', time: 'Yesterday, 08:30 AM'),
-        VitalReadingItem(value: '118/76 mmHg', time: 'May 13, 07:45 PM'),
-        VitalReadingItem(value: '128/82 mmHg', time: 'May 12, 10:10 AM'),
-        VitalReadingItem(value: '121/79 mmHg', time: 'May 11, 08:45 AM'),
-      ],
     );
   }
 }
