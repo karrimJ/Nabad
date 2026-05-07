@@ -28,6 +28,7 @@ class _LoginScreenState extends State<LoginScreen> {
 
   bool rememberMe = true;
   bool _isLoading = false;
+  bool _isResetLoading = false;
 
   @override
   void dispose() {
@@ -79,27 +80,72 @@ class _LoginScreenState extends State<LoginScreen> {
   }
 
   Future<void> _onForgotPassword() async {
-    final email = emailController.text.trim();
+  final resetEmailController = TextEditingController(
+    text: emailController.text.trim(),
+  );
 
-    if (email.isEmpty || !email.contains('@')) {
-      _showMessage('Enter your email above first to reset your password.');
-      return;
-    }
-
-    try {
-      await _authService.sendPasswordResetEmail(email: email);
-
-      if (!mounted) return;
-      _showMessage(
-        'Password reset email sent to $email.',
-        isError: false,
+  final email = await showDialog<String>(
+    context: context,
+    builder: (context) {
+      return AlertDialog(
+        title: const Text('Reset Password'),
+        content: TextField(
+          controller: resetEmailController,
+          keyboardType: TextInputType.emailAddress,
+          decoration: const InputDecoration(
+            labelText: 'Email address',
+            hintText: 'Enter your account email',
+          ),
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context),
+            child: const Text('Cancel'),
+          ),
+          ElevatedButton(
+            onPressed: () {
+              Navigator.pop(
+                context,
+                resetEmailController.text.trim(),
+              );
+            },
+            child: const Text('Send Link'),
+          ),
+        ],
       );
-    } on AuthException catch (e) {
-      _showMessage(e.message);
-    } catch (e) {
-      _showMessage('Could not send reset email: $e');
+    },
+  );
+
+  resetEmailController.dispose();
+
+  if (email == null) return;
+
+  if (email.isEmpty || !email.contains('@')) {
+    _showMessage('Please enter a valid email address.');
+    return;
+  }
+
+  setState(() => _isResetLoading = true);
+
+  try {
+    await _authService.sendPasswordResetEmail(email: email);
+
+    if (!mounted) return;
+
+    _showMessage(
+      'Password reset link sent. Check your inbox and spam folder.',
+      isError: false,
+    );
+  } on AuthException catch (e) {
+    _showMessage(e.message);
+  } catch (e) {
+    _showMessage('Could not send reset email: $e');
+  } finally {
+    if (mounted) {
+      setState(() => _isResetLoading = false);
     }
   }
+}
 
   void _showMessage(String message, {bool isError = true}) {
     if (!mounted) return;
@@ -171,9 +217,9 @@ class _LoginScreenState extends State<LoginScreen> {
                     ],
                   ),
                   GestureDetector(
-                    onTap: _isLoading ? null : _onForgotPassword,
+                    onTap: (_isLoading || _isResetLoading) ? null : _onForgotPassword,
                     child: Text(
-                      "Forgot Password?",
+                      _isResetLoading ? "Sending..." : "Forgot Password?",
                       style: AppTypography.bodySmall.copyWith(
                         color: VitalRed.vitalRed500,
                       ),
