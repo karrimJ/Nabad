@@ -1,13 +1,14 @@
 import 'package:flutter/material.dart';
-import 'package:qr_flutter/qr_flutter.dart';
 import 'package:firebase_auth/firebase_auth.dart';
-import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:qr_flutter/qr_flutter.dart';
+
 import 'package:mobile/theme/app_colors.dart';
 import 'package:mobile/theme/app_typography.dart';
+
 import '../../../widgets/main_navigation.dart';
+import '../data/medical_info_model.dart';
+import '../data/medical_info_service.dart';
 import 'edit_medical_id_screen.dart';
-import 'package:firebase_auth/firebase_auth.dart';
-import 'package:cloud_firestore/cloud_firestore.dart';
 
 class MedicalIdScreen extends StatefulWidget {
   const MedicalIdScreen({super.key});
@@ -17,44 +18,68 @@ class MedicalIdScreen extends StatefulWidget {
 }
 
 class _MedicalIdScreenState extends State<MedicalIdScreen> {
+  final MedicalInfoService _medicalInfoService = MedicalInfoService();
+
   @override
   void initState() {
     super.initState();
-    _logAccess('viewed_medical_id');
+    _medicalInfoService.logAccess('viewed_medical_id');
   }
 
-  Future<void> _logAccess(String action) async {
-    final uid = FirebaseAuth.instance.currentUser?.uid;
-
-    if (uid == null) return;
-
-    await FirebaseFirestore.instance.collection('auditLogs').add({
-      'userId': uid,
-      'action': action,
-      'resource': 'medicalInfo',
-      'timestamp': FieldValue.serverTimestamp(),
-    });
+  // ── Helpers ─────────────────────────────────────────────────────────────
+  int _ageFrom(DateTime dob) {
+    final now = DateTime.now();
+    int age = now.year - dob.year;
+    if (now.month < dob.month ||
+        (now.month == dob.month && now.day < dob.day)) {
+      age--;
+    }
+    return age;
   }
 
-  void _showQRCode(BuildContext context) {
-    _logAccess('viewed_qr_code');
+  String _orDash(String? value) {
+    if (value == null || value.isEmpty) return '—';
+    return value;
+  }
 
-    const medicalData = '''
+  String _buildQrPayload(MedicalInfoModel info, String displayName) {
+    if (info.isEmpty) {
+      return 'NABAD MEDICAL ID\n----------------\n'
+          'No medical info entered yet.\nPlease contact the patient.';
+    }
+
+    final ageText = info.dateOfBirth != null
+        ? _ageFrom(info.dateOfBirth!).toString()
+        : '—';
+    final name = info.fullName.isNotEmpty ? info.fullName : displayName;
+
+    return '''
 NABAD MEDICAL ID
 ----------------
-Name: Karim Jundi
-Age: 20
-Blood Type: AB+
-Allergies: Penicillin
-Conditions: Hypertension
-Medications: Paracetamol, Metformin
+Name: $name
+Age: $ageText
+Blood Type: ${_orDash(info.bloodType)}
+Allergies: ${_orDash(info.allergies)}
+Conditions: ${_orDash(info.chronicConditions)}
+Medications: ${_orDash(info.currentMedications)}
 ----------------
 EMERGENCY CONTACT
-Name: Sarah (Sister)
-Phone: +961 71 015 648
+Name: ${_orDash(info.emergencyContact.name)} (${_orDash(info.emergencyContact.relationship)})
+Phone: ${_orDash(info.emergencyContact.phone)}
 ----------------
 In emergency, call: 140
 ''';
+  }
+
+  // ── QR dialog ───────────────────────────────────────────────────────────
+  void _showQRCode(
+    BuildContext context,
+    MedicalInfoModel info,
+    String displayName,
+  ) {
+    _medicalInfoService.logAccess('viewed_qr_code');
+
+    final medicalData = _buildQrPayload(info, displayName);
 
     showDialog(
       context: context,
@@ -145,99 +170,147 @@ In emergency, call: 140
     );
   }
 
+  // ── Build ───────────────────────────────────────────────────────────────
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      backgroundColor: Neutral.neutral300,
-      appBar: AppBar(
-        backgroundColor: Neutral.neutral300,
-        elevation: 0,
-        scrolledUnderElevation: 0,
-        leading: IconButton(
-          icon: const Icon(
-            Icons.arrow_back,
-            color: Neutral.neutral900,
-          ),
-          onPressed: () {
-            Navigator.pushReplacement(
-              context,
-              MaterialPageRoute(
-                builder: (_) => const MainNavigation(),
+    final fallbackEmail = FirebaseAuth.instance.currentUser?.email ?? '';
+
+    return StreamBuilder<MedicalInfoModel>(
+      stream: _medicalInfoService.medicalInfoStream(),
+      builder: (context, snapshot) {
+        final isLoading = snapshot.connectionState == ConnectionState.waiting;
+        final hasError = snapshot.hasError;
+        final info = snapshot.data ?? MedicalInfoModel.empty();
+
+        final displayName = info.fullName.isNotEmpty
+            ? info.fullName
+            : (fallbackEmail.isNotEmpty
+                ? fallbackEmail.split('@').first
+                : 'Nabad User');
+
+        return Scaffold(
+          backgroundColor: Neutral.neutral300,
+          appBar: AppBar(
+            backgroundColor: Neutral.neutral300,
+            elevation: 0,
+            scrolledUnderElevation: 0,
+            leading: IconButton(
+              icon: const Icon(
+                Icons.arrow_back,
+                color: Neutral.neutral900,
               ),
-            );
-          },
-        ),
-        title: Text(
-          'Medical ID',
-          style: AppTypography.headingSmall.copyWith(
-            color: Neutral.neutral900,
-            fontWeight: FontWeight.w700,
-          ),
-        ),
-        centerTitle: true,
-        actions: [
-          IconButton(
-            icon: const Icon(
-              Icons.qr_code,
-              color: VitalRed.vitalRed500,
-              size: 28,
+              onPressed: () {
+                Navigator.pushReplacement(
+                  context,
+                  MaterialPageRoute(
+                    builder: (_) => const MainNavigation(),
+                  ),
+                );
+              },
             ),
-            onPressed: () {
-              _showQRCode(context);
-            },
-            tooltip: 'Show QR Code',
-          ),
-        ],
-      ),
-      body: SingleChildScrollView(
-        padding: const EdgeInsets.symmetric(
-          horizontal: 20,
-          vertical: 12,
-        ),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            _userCard(),
-            const SizedBox(height: 24),
-            _sectionTitle('Medical Information'),
-            const SizedBox(height: 12),
-            _infoCard([
-              _infoRow('Allergies', 'Penicillin'),
-              _divider(),
-              _infoRow('Chronic Conditions', 'Hypertension'),
-              _divider(),
-              _infoRow('Current Medications', 'Paracetamol, Metformin'),
-            ]),
-            const SizedBox(height: 24),
-            _sectionTitle('Emergency Contact'),
-            const SizedBox(height: 12),
-            _infoCard([
-              _infoRow('Name', 'Sarah'),
-              _divider(),
-              _infoRow('Relationship', 'Sister'),
-              _divider(),
-              _infoRow('Phone', '+961 71 015 648'),
-            ]),
-            const SizedBox(height: 24),
-            Text(
-              'This information can be accessed during emergencies to help healthcare providers respond quickly.',
-              style: AppTypography.bodyMedium.copyWith(
-                color: Neutral.neutral600,
-                height: 1.5,
+            title: Text(
+              'Medical ID',
+              style: AppTypography.headingSmall.copyWith(
+                color: Neutral.neutral900,
+                fontWeight: FontWeight.w700,
               ),
             ),
-            const SizedBox(height: 24),
-            _qrButton(context),
-            const SizedBox(height: 12),
-            _editButton(context),
-            const SizedBox(height: 24),
-          ],
-        ),
-      ),
+            centerTitle: true,
+            actions: [
+              IconButton(
+                icon: const Icon(
+                  Icons.qr_code,
+                  color: VitalRed.vitalRed500,
+                  size: 28,
+                ),
+                onPressed: isLoading
+                    ? null
+                    : () => _showQRCode(context, info, displayName),
+                tooltip: 'Show QR Code',
+              ),
+            ],
+          ),
+          body: isLoading
+              ? const Center(
+                  child: CircularProgressIndicator(
+                    color: VitalRed.vitalRed500,
+                  ),
+                )
+              : hasError
+                  ? Center(
+                      child: Padding(
+                        padding: const EdgeInsets.all(24),
+                        child: Text(
+                          'Could not load Medical ID: ${snapshot.error}',
+                          style: AppTypography.bodyMedium.copyWith(
+                            color: VitalRed.vitalRed500,
+                          ),
+                          textAlign: TextAlign.center,
+                        ),
+                      ),
+                    )
+                  : SingleChildScrollView(
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 20,
+                        vertical: 12,
+                      ),
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          _userCard(displayName, info),
+                          const SizedBox(height: 24),
+                          _sectionTitle('Medical Information'),
+                          const SizedBox(height: 12),
+                          _infoCard([
+                            _infoRow('Allergies', _orDash(info.allergies)),
+                            _divider(),
+                            _infoRow('Chronic Conditions',
+                                _orDash(info.chronicConditions)),
+                            _divider(),
+                            _infoRow('Current Medications',
+                                _orDash(info.currentMedications)),
+                          ]),
+                          const SizedBox(height: 24),
+                          _sectionTitle('Emergency Contact'),
+                          const SizedBox(height: 12),
+                          _infoCard([
+                            _infoRow('Name',
+                                _orDash(info.emergencyContact.name)),
+                            _divider(),
+                            _infoRow('Relationship',
+                                _orDash(info.emergencyContact.relationship)),
+                            _divider(),
+                            _infoRow('Phone',
+                                _orDash(info.emergencyContact.phone)),
+                          ]),
+                          const SizedBox(height: 24),
+                          Text(
+                            'This information can be accessed during emergencies to help healthcare providers respond quickly.',
+                            style: AppTypography.bodyMedium.copyWith(
+                              color: Neutral.neutral600,
+                              height: 1.5,
+                            ),
+                          ),
+                          const SizedBox(height: 24),
+                          _qrButton(context, info, displayName),
+                          const SizedBox(height: 12),
+                          _editButton(context),
+                          const SizedBox(height: 24),
+                        ],
+                      ),
+                    ),
+        );
+      },
     );
   }
 
-  Widget _userCard() {
+  // ── Section helpers (UI unchanged, parameterized over data) ─────────────
+  Widget _userCard(String displayName, MedicalInfoModel info) {
+    final ageText = info.dateOfBirth != null
+        ? '${_ageFrom(info.dateOfBirth!)} years'
+        : '—';
+    final bloodType = _orDash(info.bloodType);
+
     return Container(
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
@@ -265,7 +338,7 @@ In emergency, call: 140
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Text(
-                  'Karim Jundi',
+                  displayName,
                   style: AppTypography.headingSmall.copyWith(
                     color: Neutral.neutral900,
                     fontWeight: FontWeight.w700,
@@ -273,13 +346,13 @@ In emergency, call: 140
                 ),
                 const SizedBox(height: 4),
                 Text(
-                  'Age: 20 years',
+                  'Age: $ageText',
                   style: AppTypography.bodySmall.copyWith(
                     color: Neutral.neutral700,
                   ),
                 ),
                 Text(
-                  'Blood Type: AB+',
+                  'Blood Type: $bloodType',
                   style: AppTypography.bodySmall.copyWith(
                     color: Neutral.neutral700,
                   ),
@@ -365,10 +438,14 @@ In emergency, call: 140
     );
   }
 
-  Widget _qrButton(BuildContext context) {
+  Widget _qrButton(
+    BuildContext context,
+    MedicalInfoModel info,
+    String displayName,
+  ) {
     return GestureDetector(
       onTap: () {
-        _showQRCode(context);
+        _showQRCode(context, info, displayName);
       },
       child: Container(
         height: 54,
