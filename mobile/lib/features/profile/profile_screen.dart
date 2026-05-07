@@ -2,9 +2,8 @@ import 'package:flutter/material.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:mobile/theme/app_colors.dart';
 import 'package:mobile/theme/app_typography.dart';
-import 'package:mobile/features/caregiver/caregiver_screen.dart';
-import '../../routes/app_routes.dart';
-import '../../widgets/main_navigation.dart';
+import 'package:mobile/routes/app_routes.dart';
+import 'package:mobile/widgets/main_navigation.dart';
 
 class ProfileScreen extends StatelessWidget {
   const ProfileScreen({super.key});
@@ -97,9 +96,7 @@ class ProfileScreen extends StatelessWidget {
                 },
               ),
               const SizedBox(height: 12),
-              _menuItem(
-                icon: Icons.family_restroom,
-                label: 'Family & Caregiver',
+              _logoutItem(
                 onTap: () {
                   Navigator.push(
                     context,
@@ -108,10 +105,6 @@ class ProfileScreen extends StatelessWidget {
                     ),
                   );
                 },
-              ),
-              const SizedBox(height: 12),
-              _logoutItem(
-                onTap: () => _logout(context),
               ),
             ],
           ),
