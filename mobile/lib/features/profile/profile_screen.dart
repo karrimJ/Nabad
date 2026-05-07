@@ -3,7 +3,7 @@ import 'package:mobile/theme/app_colors.dart';
 import 'package:mobile/theme/app_typography.dart';
 import '../../routes/app_routes.dart';
 import '../../widgets/main_navigation.dart';
-
+import 'package:mobile/widgets/main_navigation.dart';
 import 'package:mobile/features/caregiver/caregiver_screen.dart';
 class ProfileScreen extends StatelessWidget {
   const ProfileScreen({super.key});
@@ -58,11 +58,13 @@ class ProfileScreen extends StatelessWidget {
                 icon: Icons.list_alt_outlined,
                 label: 'My Vitals',
                 onTap: () {
-                  Navigator.pushNamedAndRemoveUntil(
-                    context,
-                    AppRoutes.home,
-                    (route) => false,
-                  );
+              Navigator.pushAndRemoveUntil(
+                context,
+              MaterialPageRoute(
+                builder: (_) => const MainNavigation(),
+              ),
+                (route) => false,
+              );
                 },
               ),
               const SizedBox(height: 12),
