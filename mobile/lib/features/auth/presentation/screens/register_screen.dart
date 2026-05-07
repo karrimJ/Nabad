@@ -9,6 +9,8 @@ import '../components/auth_footer.dart';
 import '../components/auth_header.dart';
 import '../components/auth_input.dart';
 import '../components/social_button.dart';
+import '../../../../widgets/main_navigation.dart';
+import 'login_screen.dart';
 
 class RegisterScreen extends StatefulWidget {
   const RegisterScreen({super.key});
@@ -39,9 +41,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
   Future<void> _openPrivacyConsentScreen() async {
     final result = await Navigator.push<bool>(
       context,
-      MaterialPageRoute(
-        builder: (_) => const PrivacyConsentScreen(),
-      ),
+      MaterialPageRoute(builder: (_) => const PrivacyConsentScreen()),
     );
 
     if (result == true) {
@@ -120,44 +120,44 @@ class _RegisterScreenState extends State<RegisterScreen> {
           .collection('privacyConsents')
           .doc('current')
           .set({
-        'accepted': true,
-        'version': consentVersion,
-        'acceptedAt': now,
-        'source': 'signup',
-        'platform': Theme.of(context).platform.name,
-        'consentText':
-            'User consented to Nabad collecting and storing account data, health profile data, vitals, medications, medical ID information, emergency contacts, wearable readings, SOS logs, appointments, notifications, uploaded files, and app activity needed to provide Nabad features.',
-        'purposes': [
-          'Create and manage user account',
-          'Track vitals and health readings',
-          'Manage medications and reminders',
-          'Store medical ID and emergency information',
-          'Support SOS and nearby medical services features',
-          'Store wearable/device readings when connected',
-          'Improve user safety and app reliability',
-        ],
-        'dataCategories': [
-          'Email/account identifier',
-          'Vitals readings',
-          'Medication records',
-          'Medical ID information',
-          'Emergency contacts',
-          'SOS logs and location when SOS is used',
-          'Wearable/device readings',
-          'Appointments and notifications',
-          'Uploaded medical files if added by user',
-        ],
-        'withdrawalNotice':
-            'User can request withdrawal/deletion from privacy settings or by contacting the Nabad team.',
-      }, SetOptions(merge: true));
+            'accepted': true,
+            'version': consentVersion,
+            'acceptedAt': now,
+            'source': 'signup',
+            'platform': Theme.of(context).platform.name,
+            'consentText':
+                'User consented to Nabad collecting and storing account data, health profile data, vitals, medications, medical ID information, emergency contacts, wearable readings, SOS logs, appointments, notifications, uploaded files, and app activity needed to provide Nabad features.',
+            'purposes': [
+              'Create and manage user account',
+              'Track vitals and health readings',
+              'Manage medications and reminders',
+              'Store medical ID and emergency information',
+              'Support SOS and nearby medical services features',
+              'Store wearable/device readings when connected',
+              'Improve user safety and app reliability',
+            ],
+            'dataCategories': [
+              'Email/account identifier',
+              'Vitals readings',
+              'Medication records',
+              'Medical ID information',
+              'Emergency contacts',
+              'SOS logs and location when SOS is used',
+              'Wearable/device readings',
+              'Appointments and notifications',
+              'Uploaded medical files if added by user',
+            ],
+            'withdrawalNotice':
+                'User can request withdrawal/deletion from privacy settings or by contacting the Nabad team.',
+          }, SetOptions(merge: true));
 
       if (!mounted) return;
 
       _showMessage('Account created successfully.');
 
-      Navigator.pushNamedAndRemoveUntil(
+      Navigator.pushAndRemoveUntil(
         context,
-        '/',
+        MaterialPageRoute(builder: (_) => const MainNavigation()),
         (route) => false,
       );
     } on FirebaseAuthException catch (e) {
@@ -175,10 +175,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
     if (!mounted) return;
 
     ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(
-        content: Text(message),
-        backgroundColor: VitalRed.vitalRed500,
-      ),
+      SnackBar(content: Text(message), backgroundColor: VitalRed.vitalRed500),
     );
   }
 
@@ -260,10 +257,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
               Row(
                 children: [
                   Expanded(
-                    child: Divider(
-                      color: Neutral.neutral300,
-                      thickness: 1,
-                    ),
+                    child: Divider(color: Neutral.neutral300, thickness: 1),
                   ),
                   Padding(
                     padding: const EdgeInsets.symmetric(horizontal: 8),
@@ -275,10 +269,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
                     ),
                   ),
                   Expanded(
-                    child: Divider(
-                      color: Neutral.neutral300,
-                      thickness: 1,
-                    ),
+                    child: Divider(color: Neutral.neutral300, thickness: 1),
                   ),
                 ],
               ),
@@ -302,12 +293,32 @@ class _RegisterScreenState extends State<RegisterScreen> {
               const SizedBox(height: 60),
 
               Center(
-                child: AuthFooter(
-                  text: 'Already have an account? ',
-                  actionText: 'Login',
+                child: GestureDetector(
                   onTap: () {
-                    Navigator.pop(context);
+                    Navigator.pushReplacement(
+                      context,
+                      MaterialPageRoute(builder: (_) => const LoginScreen()),
+                    );
                   },
+
+                  child: RichText(
+                    text: TextSpan(
+                      text: 'Already have an account? ',
+                      style: AppTypography.bodyMedium.copyWith(
+                        color: Neutral.neutral600,
+                      ),
+
+                      children: [
+                        TextSpan(
+                          text: 'Login',
+                          style: AppTypography.bodyMedium.copyWith(
+                            color: VitalRed.vitalRed500,
+                            fontWeight: FontWeight.bold,
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
                 ),
               ),
 
@@ -348,10 +359,7 @@ class _ConsentCard extends StatelessWidget {
         children: [
           Row(
             children: [
-              Icon(
-                Icons.privacy_tip_outlined,
-                color: VitalRed.vitalRed500,
-              ),
+              Icon(Icons.privacy_tip_outlined, color: VitalRed.vitalRed500),
               const SizedBox(width: 8),
               Expanded(
                 child: Text(
@@ -429,9 +437,7 @@ class _PrivacyConsentScreenState extends State<PrivacyConsentScreen> {
         iconTheme: IconThemeData(color: Neutral.neutral800),
         title: Text(
           'Privacy & Data Consent',
-          style: AppTypography.headingSmall.copyWith(
-            color: Neutral.neutral800,
-          ),
+          style: AppTypography.headingSmall.copyWith(color: Neutral.neutral800),
         ),
       ),
       body: SafeArea(
@@ -445,29 +451,64 @@ class _PrivacyConsentScreenState extends State<PrivacyConsentScreen> {
                   children: [
                     _SectionTitle(text: 'What data Nabad collects'),
                     _BulletText(text: 'Account information such as email.'),
-                    _BulletText(text: 'Vitals such as heart rate, oxygen level, blood pressure, temperature, and glucose.'),
+                    _BulletText(
+                      text:
+                          'Vitals such as heart rate, oxygen level, blood pressure, temperature, and glucose.',
+                    ),
                     _BulletText(text: 'Medication information and reminders.'),
-                    _BulletText(text: 'Medical ID and emergency contact information.'),
-                    _BulletText(text: 'SOS logs and location only when emergency/SOS features are used.'),
-                    _BulletText(text: 'Wearable readings only when a wearable/device is connected.'),
-                    _BulletText(text: 'Uploaded medical files only when you add them.'),
+                    _BulletText(
+                      text: 'Medical ID and emergency contact information.',
+                    ),
+                    _BulletText(
+                      text:
+                          'SOS logs and location only when emergency/SOS features are used.',
+                    ),
+                    _BulletText(
+                      text:
+                          'Wearable readings only when a wearable/device is connected.',
+                    ),
+                    _BulletText(
+                      text: 'Uploaded medical files only when you add them.',
+                    ),
 
                     const SizedBox(height: 20),
 
                     _SectionTitle(text: 'Why Nabad collects this data'),
                     _BulletText(text: 'To create and manage your account.'),
-                    _BulletText(text: 'To help you monitor your health information.'),
-                    _BulletText(text: 'To support medication reminders and emergency features.'),
-                    _BulletText(text: 'To show your medical ID during emergency workflows.'),
-                    _BulletText(text: 'To improve safety, reliability, and app functionality.'),
+                    _BulletText(
+                      text: 'To help you monitor your health information.',
+                    ),
+                    _BulletText(
+                      text:
+                          'To support medication reminders and emergency features.',
+                    ),
+                    _BulletText(
+                      text:
+                          'To show your medical ID during emergency workflows.',
+                    ),
+                    _BulletText(
+                      text:
+                          'To improve safety, reliability, and app functionality.',
+                    ),
 
                     const SizedBox(height: 20),
 
                     _SectionTitle(text: 'Your control'),
-                    _BulletText(text: 'You can request access to your stored data.'),
-                    _BulletText(text: 'You can request correction or deletion of your data.'),
-                    _BulletText(text: 'You can withdraw consent later from privacy settings or by contacting the Nabad team.'),
-                    _BulletText(text: 'Withdrawal does not affect processing already completed before withdrawal.'),
+                    _BulletText(
+                      text: 'You can request access to your stored data.',
+                    ),
+                    _BulletText(
+                      text:
+                          'You can request correction or deletion of your data.',
+                    ),
+                    _BulletText(
+                      text:
+                          'You can withdraw consent later from privacy settings or by contacting the Nabad team.',
+                    ),
+                    _BulletText(
+                      text:
+                          'Withdrawal does not affect processing already completed before withdrawal.',
+                    ),
 
                     const SizedBox(height: 20),
 
@@ -577,9 +618,7 @@ class _SectionTitle extends StatelessWidget {
   Widget build(BuildContext context) {
     return Text(
       text,
-      style: AppTypography.headingSmall.copyWith(
-        color: Neutral.neutral800,
-      ),
+      style: AppTypography.headingSmall.copyWith(color: Neutral.neutral800),
     );
   }
 }

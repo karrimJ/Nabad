@@ -2,6 +2,8 @@ import 'package:flutter/material.dart';
 import 'package:mobile/theme/app_colors.dart';
 import 'package:mobile/theme/app_typography.dart';
 import '../../routes/app_routes.dart';
+import '../../widgets/main_navigation.dart';
+
 import 'package:mobile/features/caregiver/caregiver_screen.dart';
 class ProfileScreen extends StatelessWidget {
   const ProfileScreen({super.key});

@@ -10,6 +10,7 @@ import '../components/auth_footer.dart';
 import '../components/social_button.dart';
 
 import '../../../../routes/app_routes.dart';
+import '../../../../widgets/main_navigation.dart';
 
 class LoginScreen extends StatefulWidget {
   const LoginScreen({super.key});
@@ -32,9 +33,9 @@ class _LoginScreenState extends State<LoginScreen> {
   }
 
   void _login() {
-    Navigator.pushNamedAndRemoveUntil(
+    Navigator.pushAndRemoveUntil(
       context,
-      AppRoutes.home,
+      MaterialPageRoute(builder: (_) => const MainNavigation()),
       (route) => false,
     );
   }
@@ -110,20 +111,14 @@ class _LoginScreenState extends State<LoginScreen> {
 
               const SizedBox(height: 16),
 
-              AuthButton(
-                text: "Log In",
-                onPressed: _login,
-              ),
+              AuthButton(text: "Log In", onPressed: _login),
 
               const SizedBox(height: 24),
 
               Row(
                 children: [
                   Expanded(
-                    child: Divider(
-                      color: Neutral.neutral300,
-                      thickness: 1,
-                    ),
+                    child: Divider(color: Neutral.neutral300, thickness: 1),
                   ),
                   Padding(
                     padding: const EdgeInsets.symmetric(horizontal: 8),
@@ -135,10 +130,7 @@ class _LoginScreenState extends State<LoginScreen> {
                     ),
                   ),
                   Expanded(
-                    child: Divider(
-                      color: Neutral.neutral300,
-                      thickness: 1,
-                    ),
+                    child: Divider(color: Neutral.neutral300, thickness: 1),
                   ),
                 ],
               ),

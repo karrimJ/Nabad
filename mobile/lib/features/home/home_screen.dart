@@ -21,14 +21,10 @@ class HomeScreen extends StatelessWidget {
         child: Stack(
           children: [
             SingleChildScrollView(
-              padding: const EdgeInsets.symmetric(
-                horizontal: 20,
-                vertical: 16,
-              ),
+              padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 16),
 
               child: Column(
-                crossAxisAlignment:
-                    CrossAxisAlignment.start,
+                crossAxisAlignment: CrossAxisAlignment.start,
 
                 children: [
                   const SizedBox(height: 8),
@@ -40,9 +36,7 @@ class HomeScreen extends StatelessWidget {
 
                   const SizedBox(height: 16),
 
-                  Center(
-                    child: _progressCircle(78),
-                  ),
+                  Center(child: _progressCircle(78)),
 
                   const SizedBox(height: 32),
 
@@ -85,12 +79,7 @@ class HomeScreen extends StatelessWidget {
                 },
               ),
             ),
-            Positioned(
-              right: 16,
-              top: 360,
-
-              child: _chatbotButton(context),
-            ),
+            Positioned(right: 16, top: 360, child: _chatbotButton(context)),
           ],
         ),
       ),
@@ -98,115 +87,108 @@ class HomeScreen extends StatelessWidget {
   }
 
   Widget _homeDrawer(BuildContext context) {
-  return Drawer(
-    child: SafeArea(
-      child: Column(
-        children: [
-          const SizedBox(height: 24),
-          CircleAvatar(
-            radius: 36,
-            backgroundColor: VitalRed.vitalRed500,
-            child: const Icon(
-              Icons.favorite,
-              color: Colors.white,
-              size: 34,
+    return Drawer(
+      child: SafeArea(
+        child: Column(
+          children: [
+            const SizedBox(height: 24),
+            CircleAvatar(
+              radius: 36,
+              backgroundColor: VitalRed.vitalRed500,
+              child: const Icon(Icons.favorite, color: Colors.white, size: 34),
             ),
-          ),
-          const SizedBox(height: 12),
-          Text(
-            'Nabad',
-            style: AppTypography.headingMedium.copyWith(
-              color: Neutral.neutral900,
-              fontWeight: FontWeight.w700,
+            const SizedBox(height: 12),
+            Text(
+              'Nabad',
+              style: AppTypography.headingMedium.copyWith(
+                color: Neutral.neutral900,
+                fontWeight: FontWeight.w700,
+              ),
             ),
-          ),
-          const SizedBox(height: 24),
+            const SizedBox(height: 24),
 
-          ListTile(
-            leading: const Icon(Icons.person),
-            title: const Text('My Profile'),
-            onTap: () {
-              _goTo(context, AppRoutes.profile);
-            },
-          ),
-
-          ExpansionTile(
-            leading: const Icon(Icons.history),
-            title: const Text('Vital History'),
-            childrenPadding: const EdgeInsets.only(left: 24),
-            children: [
-              ListTile(
-                leading: const Icon(Icons.favorite, size: 20),
-                title: const Text('Heart Rate'),
-                onTap: () {
-                  _goTo(context, AppRoutes.heartRateHistory);
-                },
-              ),
-              ListTile(
-                leading: const Icon(Icons.air, size: 20),
-                title: const Text('Oxygen Level'),
-                onTap: () {
-                  _goTo(context, AppRoutes.oxygenHistory);
-                },
-              ),
-              ListTile(
-                leading: const Icon(Icons.thermostat, size: 20),
-                title: const Text('Temperature'),
-                onTap: () {
-                  _goTo(context, AppRoutes.temperatureHistory);
-                },
-              ),
-              ListTile(
-                leading: const Icon(Icons.bloodtype, size: 20),
-                title: const Text('Glucose Level'),
-                onTap: () {
-                  _goTo(context, AppRoutes.glucoseHistory);
-                },
-              ),
-              ListTile(
-                leading: const Icon(Icons.monitor_heart, size: 20),
-                title: const Text('Blood Pressure'),
-                onTap: () {
-                  _goTo(context, AppRoutes.bloodPressureHistory);
-                },
-              ),
-            ],
-          ),
-
-          ListTile(
-            leading: const Icon(Icons.medication),
-            title: const Text('Medications'),
-            onTap: () {
-              _goTo(context, AppRoutes.medications);
-            },
-          ),
-
-          ListTile(
-            leading: const Icon(Icons.watch),
-            title: const Text('Wearables'),
-            onTap: () {
-              _goTo(context, AppRoutes.wearables);
-            },
-          ),
-
-          ListTile(
-            leading: const Icon(
-              Icons.emergency,
-              color: Colors.red,
+            ListTile(
+              leading: const Icon(Icons.person),
+              title: const Text('My Profile'),
+              onTap: () {
+                _goTo(context, AppRoutes.profile);
+              },
             ),
-            title: const Text(
-              'Emergency',
-              style: TextStyle(color: Colors.red),
+
+            ExpansionTile(
+              leading: const Icon(Icons.history),
+              title: const Text('Vital History'),
+              childrenPadding: const EdgeInsets.only(left: 24),
+              children: [
+                ListTile(
+                  leading: const Icon(Icons.favorite, size: 20),
+                  title: const Text('Heart Rate'),
+                  onTap: () {
+                    _goTo(context, AppRoutes.heartRateHistory);
+                  },
+                ),
+                ListTile(
+                  leading: const Icon(Icons.air, size: 20),
+                  title: const Text('Oxygen Level'),
+                  onTap: () {
+                    _goTo(context, AppRoutes.oxygenHistory);
+                  },
+                ),
+                ListTile(
+                  leading: const Icon(Icons.thermostat, size: 20),
+                  title: const Text('Temperature'),
+                  onTap: () {
+                    _goTo(context, AppRoutes.temperatureHistory);
+                  },
+                ),
+                ListTile(
+                  leading: const Icon(Icons.bloodtype, size: 20),
+                  title: const Text('Glucose Level'),
+                  onTap: () {
+                    _goTo(context, AppRoutes.glucoseHistory);
+                  },
+                ),
+                ListTile(
+                  leading: const Icon(Icons.monitor_heart, size: 20),
+                  title: const Text('Blood Pressure'),
+                  onTap: () {
+                    _goTo(context, AppRoutes.bloodPressureHistory);
+                  },
+                ),
+              ],
             ),
-            onTap: () {
-              _goTo(context, AppRoutes.emergency);
-            },
-          ),
-        ],
+
+            ListTile(
+              leading: const Icon(Icons.medication),
+              title: const Text('Medications'),
+              onTap: () {
+                _goTo(context, AppRoutes.medications);
+              },
+            ),
+
+            ListTile(
+              leading: const Icon(Icons.watch),
+              title: const Text('Wearables'),
+              onTap: () {
+                _goTo(context, AppRoutes.wearables);
+              },
+            ),
+
+            ListTile(
+              leading: const Icon(Icons.emergency, color: Colors.red),
+              title: const Text(
+                'Emergency',
+                style: TextStyle(color: Colors.red),
+              ),
+              onTap: () {
+                _goTo(context, AppRoutes.emergency);
+              },
+            ),
+          ],
+        ),
       ),
-    ),
-  );
-}
+    );
+  }
 
   Widget _greetingCard() {
     return Container(
@@ -224,16 +206,13 @@ class HomeScreen extends StatelessWidget {
         children: [
           Expanded(
             child: Column(
-              crossAxisAlignment:
-                  CrossAxisAlignment.start,
+              crossAxisAlignment: CrossAxisAlignment.start,
 
               children: [
                 Text(
                   'Hi Karim! 👋',
 
-                  style:
-                      AppTypography.headingMedium
-                          .copyWith(
+                  style: AppTypography.headingMedium.copyWith(
                     color: Neutral.neutral900,
                     fontWeight: FontWeight.w700,
                   ),
@@ -244,20 +223,12 @@ class HomeScreen extends StatelessWidget {
                 Text(
                   "Here's your health summary for today.",
 
-                  style:
-                      AppTypography.bodyMedium
-                          .copyWith(
+                  style: AppTypography.bodyMedium.copyWith(
                     color: Neutral.neutral700,
                   ),
                 ),
               ],
             ),
-          ),
-
-          Image.asset(
-            'assets/images/wave.png',
-            width: 24,
-            height: 24,
           ),
         ],
       ),
@@ -268,8 +239,7 @@ class HomeScreen extends StatelessWidget {
     return Text(
       title,
 
-      style:
-          AppTypography.headingSmall.copyWith(
+      style: AppTypography.headingSmall.copyWith(
         color: Neutral.neutral900,
         fontWeight: FontWeight.w700,
       ),
@@ -289,11 +259,7 @@ class HomeScreen extends StatelessWidget {
             width: 180,
             height: 180,
 
-            child: CustomPaint(
-              painter: _ProgressPainter(
-                percent / 100,
-              ),
-            ),
+            child: CustomPaint(painter: _ProgressPainter(percent / 100)),
           ),
 
           Column(
@@ -303,9 +269,7 @@ class HomeScreen extends StatelessWidget {
               Text(
                 '$percent%',
 
-                style:
-                    AppTypography.headingLarge
-                        .copyWith(
+                style: AppTypography.headingLarge.copyWith(
                   color: VitalRed.vitalRed500,
                   fontWeight: FontWeight.w800,
                 ),
@@ -316,9 +280,7 @@ class HomeScreen extends StatelessWidget {
               Text(
                 'of goals reached',
 
-                style:
-                    AppTypography.bodySmall
-                        .copyWith(
+                style: AppTypography.bodySmall.copyWith(
                   color: Neutral.neutral700,
                 ),
               ),
@@ -338,18 +300,15 @@ class HomeScreen extends StatelessWidget {
               child: GestureDetector(
                 onTap: () => Navigator.pushNamed(context, AppRoutes.heartRate),
                 child: _vitalCard(
-                  image:
-                      'assets/images/heart.png',
+                  image: 'assets/images/heart.png',
 
                   title: 'Heart Rate',
                   value: '78 bpm',
                   status: 'NORMAL',
 
-                  statusColor:
-                      Success.success500,
+                  statusColor: Success.success500,
 
-                  background:
-                      Neutral.neutral100,
+                  background: Neutral.neutral100,
                 ),
               ),
             ),
@@ -360,18 +319,15 @@ class HomeScreen extends StatelessWidget {
               child: GestureDetector(
                 onTap: () => Navigator.pushNamed(context, AppRoutes.oxygen),
                 child: _vitalCard(
-                  image:
-                      'assets/images/lungs.png',
+                  image: 'assets/images/lungs.png',
 
                   title: 'Oxygen Level',
                   value: '88%',
                   status: 'CRITICAL',
 
-                  statusColor:
-                      VitalRed.vitalRed500,
+                  statusColor: VitalRed.vitalRed500,
 
-                  background:
-                      AccentRed.accentRed100,
+                  background: AccentRed.accentRed100,
                 ),
               ),
             ),
@@ -384,20 +340,18 @@ class HomeScreen extends StatelessWidget {
           children: [
             Expanded(
               child: GestureDetector(
-                onTap: () => Navigator.pushNamed(context, AppRoutes.temperature),
+                onTap: () =>
+                    Navigator.pushNamed(context, AppRoutes.temperature),
                 child: _vitalCard(
-                  image:
-                      'assets/images/temperature.png',
+                  image: 'assets/images/temperature.png',
 
                   title: 'Temperature',
                   value: '36.8 °C',
                   status: 'STABLE',
 
-                  statusColor:
-                      Success.success500,
+                  statusColor: Success.success500,
 
-                  background:
-                      Neutral.neutral100,
+                  background: Neutral.neutral100,
                 ),
               ),
             ),
@@ -408,21 +362,17 @@ class HomeScreen extends StatelessWidget {
               child: GestureDetector(
                 onTap: () => Navigator.pushNamed(context, AppRoutes.glucose),
                 child: _vitalCard(
-                  image:
-                      'assets/images/glucose.png',
+                  image: 'assets/images/glucose.png',
 
                   title: 'Glucose Level',
                   value: '--',
                   status: 'PENDING',
 
-                  statusColor:
-                      Neutral.neutral600,
+                  statusColor: Neutral.neutral600,
 
-                  background:
-                      Neutral.neutral400,
+                  background: Neutral.neutral400,
 
-                  valueColor:
-                      Neutral.neutral600,
+                  valueColor: Neutral.neutral600,
                 ),
               ),
             ),
@@ -442,10 +392,7 @@ class HomeScreen extends StatelessWidget {
     Color? valueColor,
   }) {
     return Container(
-      padding: const EdgeInsets.symmetric(
-        horizontal: 16,
-        vertical: 18,
-      ),
+      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 18),
 
       decoration: BoxDecoration(
         color: background,
@@ -454,25 +401,17 @@ class HomeScreen extends StatelessWidget {
       ),
 
       child: Column(
-        mainAxisAlignment:
-            MainAxisAlignment.center,
+        mainAxisAlignment: MainAxisAlignment.center,
 
         children: [
-          Image.asset(
-            image,
-            width: 26,
-            height: 26,
-            fit: BoxFit.contain,
-          ),
+          Image.asset(image, width: 26, height: 26, fit: BoxFit.contain),
 
           const SizedBox(height: 10),
 
           Text(
             title,
 
-            style:
-                AppTypography.bodyMedium
-                    .copyWith(
+            style: AppTypography.bodyMedium.copyWith(
               color: Neutral.neutral900,
               fontWeight: FontWeight.w600,
             ),
@@ -485,12 +424,8 @@ class HomeScreen extends StatelessWidget {
           Text(
             value,
 
-            style:
-                AppTypography.headingSmall
-                    .copyWith(
-              color:
-                  valueColor ??
-                  VitalRed.vitalRed500,
+            style: AppTypography.headingSmall.copyWith(
+              color: valueColor ?? VitalRed.vitalRed500,
 
               fontWeight: FontWeight.w800,
             ),
@@ -501,9 +436,7 @@ class HomeScreen extends StatelessWidget {
           Text(
             status,
 
-            style:
-                AppTypography.bodySmall
-                    .copyWith(
+            style: AppTypography.bodySmall.copyWith(
               color: statusColor,
               fontWeight: FontWeight.w700,
               letterSpacing: 0.5,
@@ -514,15 +447,10 @@ class HomeScreen extends StatelessWidget {
     );
   }
 
-  Widget _bloodPressureCard(
-    BuildContext context,
-  ) {
+  Widget _bloodPressureCard(BuildContext context) {
     return GestureDetector(
       onTap: () {
-        Navigator.pushNamed(
-          context,
-          AppRoutes.bloodPressure,
-        );
+        Navigator.pushNamed(context, AppRoutes.bloodPressure);
       },
 
       child: Container(
@@ -533,8 +461,7 @@ class HomeScreen extends StatelessWidget {
         decoration: BoxDecoration(
           color: const Color(0xFFFFF1DC),
 
-          borderRadius:
-              BorderRadius.circular(18),
+          borderRadius: BorderRadius.circular(18),
         ),
 
         child: Column(
@@ -550,9 +477,7 @@ class HomeScreen extends StatelessWidget {
             Text(
               'Blood Pressure',
 
-              style:
-                  AppTypography.bodyLarge
-                      .copyWith(
+              style: AppTypography.bodyLarge.copyWith(
                 color: Neutral.neutral900,
                 fontWeight: FontWeight.w600,
               ),
@@ -563,9 +488,7 @@ class HomeScreen extends StatelessWidget {
             Text(
               '142/88 mmHg',
 
-              style:
-                  AppTypography.headingMedium
-                      .copyWith(
+              style: AppTypography.headingMedium.copyWith(
                 color: const Color(0xFFE19831),
                 fontWeight: FontWeight.w800,
               ),
@@ -576,9 +499,7 @@ class HomeScreen extends StatelessWidget {
             Text(
               'HIGH',
 
-              style:
-                  AppTypography.bodySmall
-                      .copyWith(
+              style: AppTypography.bodySmall.copyWith(
                 color: const Color(0xFFE19831),
                 fontWeight: FontWeight.w700,
               ),
@@ -589,15 +510,10 @@ class HomeScreen extends StatelessWidget {
     );
   }
 
-  Widget _medicationCard(
-    BuildContext context,
-  ) {
+  Widget _medicationCard(BuildContext context) {
     return GestureDetector(
       onTap: () {
-        Navigator.pushNamed(
-          context,
-          AppRoutes.medications,
-        );
+        Navigator.pushNamed(context, AppRoutes.medications);
       },
 
       child: Container(
@@ -606,39 +522,28 @@ class HomeScreen extends StatelessWidget {
         decoration: BoxDecoration(
           color: Neutral.neutral100,
 
-          borderRadius:
-              BorderRadius.circular(16),
+          borderRadius: BorderRadius.circular(16),
         ),
 
         child: Row(
-          crossAxisAlignment:
-              CrossAxisAlignment.start,
+          crossAxisAlignment: CrossAxisAlignment.start,
 
           children: [
-            Image.asset(
-              'assets/images/medication.png',
-              width: 42,
-              height: 42,
-            ),
+            Image.asset('assets/images/medication.png', width: 42, height: 42),
 
             const SizedBox(width: 12),
 
             Expanded(
               child: Column(
-                crossAxisAlignment:
-                    CrossAxisAlignment.start,
+                crossAxisAlignment: CrossAxisAlignment.start,
 
                 children: [
                   Text(
                     'Paracetamol',
 
-                    style:
-                        AppTypography.bodyLarge
-                            .copyWith(
-                      color:
-                          Neutral.neutral900,
-                      fontWeight:
-                          FontWeight.w700,
+                    style: AppTypography.bodyLarge.copyWith(
+                      color: Neutral.neutral900,
+                      fontWeight: FontWeight.w700,
                     ),
                   ),
 
@@ -647,11 +552,8 @@ class HomeScreen extends StatelessWidget {
                   Text(
                     'Next dose at 08:00 AM',
 
-                    style:
-                        AppTypography.bodySmall
-                            .copyWith(
-                      color:
-                          Neutral.neutral700,
+                    style: AppTypography.bodySmall.copyWith(
+                      color: Neutral.neutral700,
                     ),
                   ),
 
@@ -660,13 +562,9 @@ class HomeScreen extends StatelessWidget {
                   Text(
                     'In 2h 15m',
 
-                    style:
-                        AppTypography.headingSmall
-                            .copyWith(
-                      color:
-                          VitalRed.vitalRed500,
-                      fontWeight:
-                          FontWeight.w800,
+                    style: AppTypography.headingSmall.copyWith(
+                      color: VitalRed.vitalRed500,
+                      fontWeight: FontWeight.w800,
                     ),
                   ),
 
@@ -680,22 +578,15 @@ class HomeScreen extends StatelessWidget {
                     decoration: BoxDecoration(
                       color: Success.success100,
 
-                      borderRadius:
-                          BorderRadius.circular(
-                        20,
-                      ),
+                      borderRadius: BorderRadius.circular(20),
                     ),
 
                     child: Text(
                       'TAKEN',
 
-                      style:
-                          AppTypography.bodySmall
-                              .copyWith(
-                        color:
-                            Success.success500,
-                        fontWeight:
-                            FontWeight.w700,
+                      style: AppTypography.bodySmall.copyWith(
+                        color: Success.success500,
+                        fontWeight: FontWeight.w700,
                       ),
                     ),
                   ),
@@ -708,15 +599,10 @@ class HomeScreen extends StatelessWidget {
     );
   }
 
-  Widget _chatbotButton(
-    BuildContext context,
-  ) {
+  Widget _chatbotButton(BuildContext context) {
     return GestureDetector(
       onTap: () {
-        Navigator.pushNamed(
-          context,
-          AppRoutes.assistant,
-        );
+        Navigator.pushNamed(context, AppRoutes.assistant);
       },
 
       child: Container(
@@ -728,12 +614,12 @@ class HomeScreen extends StatelessWidget {
           shape: BoxShape.circle,
         ),
 
-        child: Center(
+        child: ClipOval(
           child: Image.asset(
-            'assets/images/assistant.png',
-            width: 28,
-            height: 28,
-            color: Colors.white,
+            'assets/images/robot.png',
+            width: 40,
+            height: 40,
+            fit: BoxFit.cover,
           ),
         ),
       ),
@@ -748,38 +634,26 @@ class _ProgressPainter extends CustomPainter {
 
   @override
   void paint(Canvas canvas, Size size) {
-    final center = Offset(
-      size.width / 2,
-      size.height / 2,
-    );
+    final center = Offset(size.width / 2, size.height / 2);
 
     final radius = size.width / 2 - 12;
 
-    final bgPaint =
-        Paint()
-          ..color = Neutral.neutral400
-          ..strokeWidth = 14
-          ..style = PaintingStyle.stroke
-          ..strokeCap = StrokeCap.round;
+    final bgPaint = Paint()
+      ..color = Neutral.neutral400
+      ..strokeWidth = 14
+      ..style = PaintingStyle.stroke
+      ..strokeCap = StrokeCap.round;
 
-    final fgPaint =
-        Paint()
-          ..color = VitalRed.vitalRed500
-          ..strokeWidth = 14
-          ..style = PaintingStyle.stroke
-          ..strokeCap = StrokeCap.round;
+    final fgPaint = Paint()
+      ..color = VitalRed.vitalRed500
+      ..strokeWidth = 14
+      ..style = PaintingStyle.stroke
+      ..strokeCap = StrokeCap.round;
 
-    canvas.drawCircle(
-      center,
-      radius,
-      bgPaint,
-    );
+    canvas.drawCircle(center, radius, bgPaint);
 
     canvas.drawArc(
-      Rect.fromCircle(
-        center: center,
-        radius: radius,
-      ),
+      Rect.fromCircle(center: center, radius: radius),
 
       -math.pi / 2,
       2 * math.pi * progress,
