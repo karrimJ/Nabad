@@ -1,12 +1,13 @@
 import 'dart:async';
-import 'dart:io';
 
 import 'package:app_settings/app_settings.dart';
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_blue_plus/flutter_blue_plus.dart';
 import 'package:mobile/features/wearables/components/InfoBox.dart';
 import 'package:mobile/features/wearables/components/Permission_Box.dart';
 import 'package:mobile/features/wearables/components/SUPPORTED_DATA.dart';
+import 'package:mobile/features/wearables/virtual_iot_reading_service.dart';
 import 'package:mobile/features/wearables/wearable_ble_service.dart';
 import 'package:mobile/routes/app_routes.dart';
 import 'package:mobile/theme/app_colors.dart';
@@ -23,18 +24,22 @@ class ConnectWearableScreen extends StatefulWidget {
 class _ConnectWearableScreenState extends State<ConnectWearableScreen>
     with WidgetsBindingObserver {
   final WearableBleService _bleService = WearableBleService();
+  final VirtualIotReadingService _virtualService = VirtualIotReadingService();
 
   StreamSubscription<BluetoothAdapterState>? _adapterSubscription;
   StreamSubscription<int>? _heartRateSubscription;
+  StreamSubscription<VirtualIotReadingSnapshot>? _virtualReadingSubscription;
 
   List<BluetoothDevice> _pairedDevices = [];
 
   BluetoothDevice? _connectedDevice;
+  VirtualIotReadingSnapshot? _latestVirtualReading;
 
   bool _isBluetoothOn = false;
   bool _isLoadingDevices = false;
   bool _isConnecting = false;
   bool _demoConnected = false;
+  bool _isStartingDemo = false;
 
   int? _latestHeartRate;
 
@@ -42,6 +47,10 @@ class _ConnectWearableScreenState extends State<ConnectWearableScreen>
       "Turn on Bluetooth, pair your watch from phone settings, then connect here.";
 
   static const String _demoName = "Demo Wearable Device";
+
+  bool get _isAndroid {
+    return !kIsWeb && defaultTargetPlatform == TargetPlatform.android;
+  }
 
   @override
   void initState() {
@@ -57,12 +66,11 @@ class _ConnectWearableScreenState extends State<ConnectWearableScreen>
       setState(() {
         _isBluetoothOn = isOn;
 
-        if (!isOn) {
+        if (!isOn && !_demoConnected) {
           _pairedDevices = [];
           _connectedDevice = null;
-          _demoConnected = false;
           _status = "Bluetooth is off. Turn it on from settings.";
-        } else {
+        } else if (isOn && !_demoConnected) {
           _status = "Bluetooth is on. Loading paired devices...";
         }
       });
@@ -78,6 +86,21 @@ class _ConnectWearableScreenState extends State<ConnectWearableScreen>
       setState(() {
         _latestHeartRate = bpm;
         _status = "Receiving heart rate from wearable.";
+      });
+    });
+
+    _virtualReadingSubscription =
+        _virtualService.readingsStream.listen((reading) {
+      if (!mounted) return;
+
+      setState(() {
+        _latestVirtualReading = reading;
+        _latestHeartRate = reading.heartRate;
+        _demoConnected = true;
+        _isStartingDemo = false;
+        _connectedDevice = null;
+        _status =
+            "Virtual IoT demo is running. New readings are saved every 5 seconds.";
       });
     });
 
@@ -115,7 +138,7 @@ class _ConnectWearableScreenState extends State<ConnectWearableScreen>
   }
 
   Future<bool> _requestBluetoothPermissions() async {
-    if (!Platform.isAndroid) return true;
+    if (!_isAndroid) return true;
 
     final statuses = await [
       Permission.bluetoothScan,
@@ -148,34 +171,42 @@ class _ConnectWearableScreenState extends State<ConnectWearableScreen>
 
     if (!allowed) return;
 
-    if (value) {
-      try {
-        if (Platform.isAndroid) {
-          await FlutterBluePlus.turnOn();
-        }
-      } catch (_) {
-        // Some Android versions do not allow silent Bluetooth changes.
-      }
-
-      await _openBluetoothSettings();
-    } else {
+    if (!value) {
       await _disconnectCurrentDevice();
+      await _disconnectDemoDevice();
 
-      try {
-        if (Platform.isAndroid) {
-          await FlutterBluePlus.turnOff();
-          await _refreshBluetoothState();
-          return;
-        }
-      } catch (_) {
-        // On newer Android versions, the app may not be allowed to turn Bluetooth off.
-      }
+      if (!mounted) return;
 
-      await _openBluetoothSettings();
+      setState(() {
+        _isBluetoothOn = false;
+        _status =
+            "App Bluetooth connection is off. Permissions were not revoked.";
+      });
+
+      return;
     }
+
+    if (_isAndroid) {
+      try {
+        await FlutterBluePlus.turnOn();
+      } catch (_) {
+        await _openBluetoothSettings();
+      }
+    }
+
+    if (!mounted) return;
+
+    setState(() {
+      _isBluetoothOn = true;
+      _status = "Bluetooth is on. You can connect the demo wearable.";
+    });
+
+    await _loadPairedDevices();
   }
 
   Future<void> _openBluetoothSettings() async {
+    if (!_isAndroid) return;
+
     try {
       await AppSettings.openAppSettings(type: AppSettingsType.bluetooth);
     } catch (_) {
@@ -203,9 +234,8 @@ class _ConnectWearableScreenState extends State<ConnectWearableScreen>
         return;
       }
 
-      final devices = Platform.isAndroid
-          ? await FlutterBluePlus.bondedDevices
-          : <BluetoothDevice>[];
+      final devices =
+          _isAndroid ? await FlutterBluePlus.bondedDevices : <BluetoothDevice>[];
 
       final uniqueDevices = <String, BluetoothDevice>{};
 
@@ -222,11 +252,13 @@ class _ConnectWearableScreenState extends State<ConnectWearableScreen>
         _pairedDevices = sortedDevices;
         _isLoadingDevices = false;
 
-        if (_pairedDevices.isEmpty) {
-          _status =
-              "No paired devices found. Pair your watch from phone Bluetooth settings first.";
-        } else {
-          _status = "Select a paired wearable from the list.";
+        if (!_demoConnected) {
+          if (_pairedDevices.isEmpty) {
+            _status =
+                "No paired devices found. Pair your watch from phone Bluetooth settings first.";
+          } else {
+            _status = "Select a paired wearable from the list.";
+          }
         }
       });
     } catch (e) {
@@ -236,7 +268,7 @@ class _ConnectWearableScreenState extends State<ConnectWearableScreen>
         _isLoadingDevices = false;
         _status = "Could not load paired devices: $e";
       });
-    });
+    }
   }
 
   Future<void> _connectPairedDevice(BluetoothDevice device) async {
@@ -244,9 +276,12 @@ class _ConnectWearableScreenState extends State<ConnectWearableScreen>
 
     if (!allowed) return;
 
+    await _virtualService.stop();
+
     setState(() {
       _isConnecting = true;
       _demoConnected = false;
+      _latestVirtualReading = null;
       _status = "Connecting to ${_deviceName(device)}...";
     });
 
@@ -281,27 +316,63 @@ class _ConnectWearableScreenState extends State<ConnectWearableScreen>
 
     setState(() {
       _connectedDevice = null;
-      _demoConnected = false;
-      _latestHeartRate = null;
+
+      if (!_demoConnected) {
+        _latestHeartRate = null;
+      }
+
       _status = _isBluetoothOn
           ? "Disconnected. Select a paired wearable from the list."
           : "Bluetooth is off.";
     });
   }
 
-  void _connectDemoDevice() {
+  Future<void> _connectDemoDevice() async {
+    if (_isStartingDemo || _demoConnected) return;
+
     setState(() {
-      _demoConnected = true;
-      _connectedDevice = null;
-      _latestHeartRate = 76;
-      _status = "Connected to $_demoName in demo mode.";
+      _isStartingDemo = true;
+      _status = "Starting virtual IoT demo...";
     });
+
+    try {
+      await _disconnectCurrentDevice();
+      await _virtualService.start();
+
+      if (!mounted) return;
+
+      setState(() {
+        _demoConnected = true;
+        _isStartingDemo = false;
+        _connectedDevice = null;
+        _status =
+            "Connected to $_demoName. Fake readings are saving every 5 seconds.";
+      });
+    } catch (e) {
+      if (!mounted) return;
+
+      setState(() {
+        _demoConnected = false;
+        _isStartingDemo = false;
+        _status = "Could not start virtual IoT demo: $e";
+      });
+    }
   }
 
-  void _disconnectDemoDevice() {
+  Future<void> _disconnectDemoDevice() async {
+    await _virtualService.stop();
+
+    if (!mounted) return;
+
     setState(() {
       _demoConnected = false;
-      _latestHeartRate = null;
+      _isStartingDemo = false;
+      _latestVirtualReading = null;
+
+      if (_connectedDevice == null) {
+        _latestHeartRate = null;
+      }
+
       _status = "Demo wearable disconnected.";
     });
   }
@@ -326,7 +397,9 @@ class _ConnectWearableScreenState extends State<ConnectWearableScreen>
 
     _adapterSubscription?.cancel();
     _heartRateSubscription?.cancel();
+    _virtualReadingSubscription?.cancel();
 
+    _virtualService.dispose();
     _bleService.dispose();
 
     super.dispose();
@@ -341,7 +414,12 @@ class _ConnectWearableScreenState extends State<ConnectWearableScreen>
         elevation: 0,
         leading: IconButton(
           icon: const Icon(Icons.arrow_back, color: Colors.black),
-          onPressed: () => Navigator.pop(context),
+          onPressed: () {
+            Navigator.pushReplacementNamed(
+              context,
+              AppRoutes.wearables,
+            );
+          },
         ),
         centerTitle: true,
         title: Text(
@@ -360,19 +438,18 @@ class _ConnectWearableScreenState extends State<ConnectWearableScreen>
               const SizedBox(height: 20),
               _heartRateCard(),
             ],
+            if (_latestVirtualReading != null) ...[
+              const SizedBox(height: 20),
+              _virtualReadingsCard(),
+            ],
             const SizedBox(height: 20),
             _availableDevicesSection(),
             const SizedBox(height: 20),
-
-            const InfoBox(),
-
+            InfoBox(),
             const SizedBox(height: 20),
-
-            const SupportedDataSection(),
-
+            SupportedDataSection(),
             const SizedBox(height: 20),
-
-            const PermissionBox(),
+            PermissionBox(),
           ],
         ),
       ),
@@ -405,8 +482,8 @@ class _ConnectWearableScreenState extends State<ConnectWearableScreen>
                 const SizedBox(height: 4),
                 Text(
                   _isBluetoothOn
-                      ? "Tap the switch to open Bluetooth settings."
-                      : "Turn Bluetooth on to pair your watch.",
+                      ? "Bluetooth access is active. You can connect demo or paired devices."
+                      : "Turn Bluetooth on to connect your wearable.",
                   style: AppTypography.bodySmall,
                 ),
               ],
@@ -433,7 +510,6 @@ class _ConnectWearableScreenState extends State<ConnectWearableScreen>
         children: [
           const Icon(Icons.info_outline, color: VitalRed.vitalRed500),
           const SizedBox(width: 12),
-
           Expanded(
             child: Text(
               _status,
@@ -458,6 +534,45 @@ class _ConnectWearableScreenState extends State<ConnectWearableScreen>
         borderRadius: BorderRadius.circular(16),
       ),
       child: Column(
+        children: [
+          Text(
+            _demoConnected ? "Demo Heart Rate" : "Live Heart Rate",
+            style: AppTypography.bodyLarge.copyWith(
+              fontWeight: FontWeight.w700,
+            ),
+          ),
+          const SizedBox(height: 8),
+          Text(
+            "$_latestHeartRate",
+            style: AppTypography.headingLarge.copyWith(
+              color: VitalRed.vitalRed500,
+              fontSize: 48,
+              fontWeight: FontWeight.w800,
+            ),
+          ),
+          Text(
+            "bpm",
+            style: AppTypography.bodyMedium,
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _virtualReadingsCard() {
+    final reading = _latestVirtualReading;
+
+    if (reading == null) {
+      return const SizedBox.shrink();
+    }
+
+    return Container(
+      padding: const EdgeInsets.all(18),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(16),
+      ),
+      child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Text(
@@ -466,41 +581,61 @@ class _ConnectWearableScreenState extends State<ConnectWearableScreen>
               fontWeight: FontWeight.w700,
             ),
           ),
-
           const SizedBox(height: 14),
-
           _readingRow(
             icon: Icons.favorite,
             title: "Heart Rate",
             value: "${reading.heartRate} bpm",
           ),
-
           _readingRow(
             icon: Icons.air,
             title: "Oxygen Level",
             value: "${reading.oxygen}%",
           ),
-
           _readingRow(
             icon: Icons.thermostat,
             title: "Temperature",
             value: "${reading.temperature.toStringAsFixed(1)} °C",
           ),
-
           _readingRow(
             icon: Icons.monitor_heart,
             title: "Blood Pressure",
             value: reading.bloodPressureText,
           ),
-
           const SizedBox(height: 8),
-
           Text(
-            "$_latestHeartRate",
-            style: AppTypography.headingLarge.copyWith(
+            "Each new set is saved to Firebase under vitals and iotReadings.",
+            style: AppTypography.bodySmall.copyWith(
+              color: Neutral.neutral700,
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _readingRow({
+    required IconData icon,
+    required String title,
+    required String value,
+  }) {
+    return Padding(
+      padding: const EdgeInsets.only(bottom: 12),
+      child: Row(
+        children: [
+          Icon(icon, color: VitalRed.vitalRed500),
+          const SizedBox(width: 12),
+          Expanded(
+            child: Text(
+              title,
+              style: AppTypography.bodyMedium,
+            ),
+          ),
+          Text(
+            value,
+            style: AppTypography.bodyMedium.copyWith(
+              fontWeight: FontWeight.w700,
               color: VitalRed.vitalRed500,
-              fontSize: 48,
-              fontWeight: FontWeight.w800,
             ),
           ),
         ],
@@ -621,7 +756,7 @@ class _ConnectWearableScreenState extends State<ConnectWearableScreen>
                 ),
                 const SizedBox(height: 4),
                 Text(
-                  "Demo only",
+                  "Fake IoT readings every 5 seconds",
                   style: AppTypography.bodySmall.copyWith(
                     color: Neutral.neutral700,
                   ),
@@ -630,7 +765,11 @@ class _ConnectWearableScreenState extends State<ConnectWearableScreen>
             ),
           ),
           OutlinedButton(
-            onPressed: _demoConnected ? _disconnectDemoDevice : _connectDemoDevice,
+            onPressed: _isStartingDemo
+                ? null
+                : _demoConnected
+                    ? _disconnectDemoDevice
+                    : _connectDemoDevice,
             style: OutlinedButton.styleFrom(
               side: BorderSide(color: VitalRed.vitalRed500),
               shape: RoundedRectangleBorder(
@@ -638,7 +777,11 @@ class _ConnectWearableScreenState extends State<ConnectWearableScreen>
               ),
             ),
             child: Text(
-              _demoConnected ? "Connected" : "Connect",
+              _isStartingDemo
+                  ? "Starting..."
+                  : _demoConnected
+                      ? "Stop"
+                      : "Connect",
               style: TextStyle(color: VitalRed.vitalRed500),
             ),
           ),
