@@ -236,7 +236,7 @@ class _ConnectWearableScreenState extends State<ConnectWearableScreen>
         _isLoadingDevices = false;
         _status = "Could not load paired devices: $e";
       });
-    }
+    });
   }
 
   Future<void> _connectPairedDevice(BluetoothDevice device) async {
@@ -341,12 +341,7 @@ class _ConnectWearableScreenState extends State<ConnectWearableScreen>
         elevation: 0,
         leading: IconButton(
           icon: const Icon(Icons.arrow_back, color: Colors.black),
-          onPressed: () {
-            Navigator.pushReplacementNamed(
-              context,
-              AppRoutes.wearables,
-            );
-          },
+          onPressed: () => Navigator.pop(context),
         ),
         centerTitle: true,
         title: Text(
@@ -368,11 +363,16 @@ class _ConnectWearableScreenState extends State<ConnectWearableScreen>
             const SizedBox(height: 20),
             _availableDevicesSection(),
             const SizedBox(height: 20),
-            InfoBox(),
+
+            const InfoBox(),
+
             const SizedBox(height: 20),
-            SupportedDataSection(),
+
+            const SupportedDataSection(),
+
             const SizedBox(height: 20),
-            PermissionBox(),
+
+            const PermissionBox(),
           ],
         ),
       ),
@@ -433,6 +433,7 @@ class _ConnectWearableScreenState extends State<ConnectWearableScreen>
         children: [
           const Icon(Icons.info_outline, color: VitalRed.vitalRed500),
           const SizedBox(width: 12),
+
           Expanded(
             child: Text(
               _status,
@@ -457,14 +458,43 @@ class _ConnectWearableScreenState extends State<ConnectWearableScreen>
         borderRadius: BorderRadius.circular(16),
       ),
       child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Text(
-            "Live Heart Rate",
+            "Latest Virtual IoT Readings",
             style: AppTypography.bodyLarge.copyWith(
               fontWeight: FontWeight.w700,
             ),
           ),
+
+          const SizedBox(height: 14),
+
+          _readingRow(
+            icon: Icons.favorite,
+            title: "Heart Rate",
+            value: "${reading.heartRate} bpm",
+          ),
+
+          _readingRow(
+            icon: Icons.air,
+            title: "Oxygen Level",
+            value: "${reading.oxygen}%",
+          ),
+
+          _readingRow(
+            icon: Icons.thermostat,
+            title: "Temperature",
+            value: "${reading.temperature.toStringAsFixed(1)} °C",
+          ),
+
+          _readingRow(
+            icon: Icons.monitor_heart,
+            title: "Blood Pressure",
+            value: reading.bloodPressureText,
+          ),
+
           const SizedBox(height: 8),
+
           Text(
             "$_latestHeartRate",
             style: AppTypography.headingLarge.copyWith(
@@ -472,10 +502,6 @@ class _ConnectWearableScreenState extends State<ConnectWearableScreen>
               fontSize: 48,
               fontWeight: FontWeight.w800,
             ),
-          ),
-          Text(
-            "bpm",
-            style: AppTypography.bodyMedium,
           ),
         ],
       ),
