@@ -320,36 +320,47 @@ class _EmergencyScreenState extends State<EmergencyScreen> {
   }
 
   Widget _actionsCard() {
-    return Container(
-      decoration: BoxDecoration(
-        color: Neutral.neutral100,
-        borderRadius: BorderRadius.circular(14),
-      ),
-      child: Column(
-        children: [
-          _actionRow(
-            icon: Icons.phone,
-            label: 'Call Red Cross (140)',
-            onTap: () {
-              _callNumber('140');
-            },
-          ),
-          _divider(),
-          _actionRow(
-            icon: Icons.contact_emergency,
-            label: 'Send Location to Contact',
-            onTap: _sendEmergencySMS,
-          ),
-          _divider(),
-          _actionRow(
-            icon: Icons.local_hospital,
-            label: 'Find Nearest Hospital',
-            onTap: _triggerSOS,
-          ),
-        ],
-      ),
-    );
-  }
+  return Container(
+    decoration: BoxDecoration(
+      color: Neutral.neutral100,
+      borderRadius: BorderRadius.circular(14),
+    ),
+    child: Column(
+      children: [
+        _actionRow(
+          icon: Icons.phone,
+          label: 'Call Red Cross (140)',
+          onTap: () {
+            _callNumber('140');
+          },
+        ),
+        _divider(),
+        _actionRow(
+          icon: Icons.contact_emergency,
+          label: 'Send Location to Contact',
+          onTap: _sendEmergencySMS,
+        ),
+        _divider(),
+        _actionRow(
+          icon: Icons.group,
+          label: 'Emergency Contacts',
+          onTap: () {
+            Navigator.pushNamed(
+              context,
+              AppRoutes.emergencyContacts,
+            );
+          },
+        ),
+        _divider(),
+        _actionRow(
+          icon: Icons.local_hospital,
+          label: 'Find Nearest Hospital',
+          onTap: _triggerSOS,
+        ),
+      ],
+    ),
+  );
+}
 
   Widget _actionRow({
     required IconData icon,
