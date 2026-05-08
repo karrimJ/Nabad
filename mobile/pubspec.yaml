@@ -9,6 +9,8 @@ environment:
   sdk: ^3.10.8
 
 dependencies:
+  app_settings: ^7.0.0
+
   flutter:
     sdk: flutter
 
