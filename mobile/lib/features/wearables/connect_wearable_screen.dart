@@ -24,7 +24,8 @@ class ConnectWearableScreen extends StatefulWidget {
 class _ConnectWearableScreenState extends State<ConnectWearableScreen>
     with WidgetsBindingObserver {
   final WearableBleService _bleService = WearableBleService();
-  final VirtualIotReadingService _virtualService = VirtualIotReadingService();
+  final VirtualIotReadingService _virtualService =
+      VirtualIotReadingService.instance;
 
   StreamSubscription<BluetoothAdapterState>? _adapterSubscription;
   StreamSubscription<int>? _heartRateSubscription;
@@ -101,14 +102,25 @@ class _ConnectWearableScreenState extends State<ConnectWearableScreen>
         _connectedDevice = null;
 
         if (reading.isCritical) {
-          _status =
-              "CRITICAL vitals detected. SOS triggered automatically.";
+          _status = "CRITICAL vitals detected. SOS triggered automatically.";
         } else {
           _status =
               "Virtual IoT demo is running. New readings are saved every 5 seconds.";
         }
       });
     });
+
+    final lastReading = _virtualService.lastReading;
+
+    if (_virtualService.isRunning && lastReading != null) {
+      _latestVirtualReading = lastReading;
+      _latestHeartRate = lastReading.heartRate;
+      _demoConnected = true;
+
+      _status = lastReading.isCritical
+          ? "CRITICAL vitals detected. SOS triggered automatically."
+          : "Virtual IoT demo is still running. Home screen will keep updating.";
+    }
 
     _refreshBluetoothState();
   }
@@ -607,13 +619,10 @@ class _ConnectWearableScreenState extends State<ConnectWearableScreen>
     return Container(
       padding: const EdgeInsets.all(18),
       decoration: BoxDecoration(
-        color: reading.isCritical
-            ? const Color(0xFFFFE6E6)
-            : Colors.white,
+        color: reading.isCritical ? const Color(0xFFFFE6E6) : Colors.white,
         borderRadius: BorderRadius.circular(16),
-        border: reading.isCritical
-            ? Border.all(color: VitalRed.vitalRed500)
-            : null,
+        border:
+            reading.isCritical ? Border.all(color: VitalRed.vitalRed500) : null,
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -624,9 +633,8 @@ class _ConnectWearableScreenState extends State<ConnectWearableScreen>
                 : "Latest Virtual IoT Readings",
             style: AppTypography.bodyLarge.copyWith(
               fontWeight: FontWeight.w700,
-              color: reading.isCritical
-                  ? VitalRed.vitalRed500
-                  : Neutral.neutral900,
+              color:
+                  reading.isCritical ? VitalRed.vitalRed500 : Neutral.neutral900,
             ),
           ),
           const SizedBox(height: 14),
