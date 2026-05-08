@@ -5,10 +5,10 @@ import 'package:mobile/theme/app_colors.dart';
 import 'package:mobile/theme/app_typography.dart';
 
 import '../components/auth_button.dart';
-import '../components/auth_footer.dart';
 import '../components/auth_header.dart';
 import '../components/auth_input.dart';
 import '../components/social_button.dart';
+import '../../data/auth_service.dart';
 import '../../../../widgets/main_navigation.dart';
 import 'login_screen.dart';
 
@@ -23,6 +23,8 @@ class _RegisterScreenState extends State<RegisterScreen> {
   final emailController = TextEditingController();
   final passwordController = TextEditingController();
   final confirmController = TextEditingController();
+
+  final AuthService _authService = AuthService();
 
   bool _privacyConsent = false;
   bool _healthDataConsent = false;
@@ -39,7 +41,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
   }
 
   Future<void> _openPrivacyConsentScreen() async {
-    final result = await Navigator.push<bool>(
+    final result = await Navigator.push(
       context,
       MaterialPageRoute(builder: (_) => const PrivacyConsentScreen()),
     );
@@ -102,13 +104,13 @@ class _RegisterScreenState extends State<RegisterScreen> {
         'uid': uid,
         'email': email,
         'createdAt': now,
+        'lastLoginAt': now,
+        'signInProvider': 'password',
 
-        // GDPR/privacy consent summary on user document
         'privacyConsentGranted': true,
         'privacyConsentVersion': consentVersion,
         'privacyConsentGrantedAt': now,
 
-        // Health app specific consent
         'healthDataConsentGranted': true,
         'healthDataConsentVersion': consentVersion,
         'healthDataConsentGrantedAt': now,
@@ -120,40 +122,41 @@ class _RegisterScreenState extends State<RegisterScreen> {
           .collection('privacyConsents')
           .doc('current')
           .set({
-            'accepted': true,
-            'version': consentVersion,
-            'acceptedAt': now,
-            'source': 'signup',
-            'platform': Theme.of(context).platform.name,
-            'consentText':
-                'User consented to Nabad collecting and storing account data, health profile data, vitals, medications, medical ID information, emergency contacts, wearable readings, SOS logs, appointments, notifications, uploaded files, and app activity needed to provide Nabad features.',
-            'purposes': [
-              'Create and manage user account',
-              'Track vitals and health readings',
-              'Manage medications and reminders',
-              'Store medical ID and emergency information',
-              'Support SOS and nearby medical services features',
-              'Store wearable/device readings when connected',
-              'Improve user safety and app reliability',
-            ],
-            'dataCategories': [
-              'Email/account identifier',
-              'Vitals readings',
-              'Medication records',
-              'Medical ID information',
-              'Emergency contacts',
-              'SOS logs and location when SOS is used',
-              'Wearable/device readings',
-              'Appointments and notifications',
-              'Uploaded medical files if added by user',
-            ],
-            'withdrawalNotice':
-                'User can request withdrawal/deletion from privacy settings or by contacting the Nabad team.',
-          }, SetOptions(merge: true));
+        'accepted': true,
+        'version': consentVersion,
+        'acceptedAt': now,
+        'source': 'email_signup',
+        'platform': Theme.of(context).platform.name,
+        'provider': 'password',
+        'consentText':
+            'User consented to Nabad collecting and storing account data, health profile data, vitals, medications, medical ID information, emergency contacts, wearable readings, SOS logs, appointments, notifications, uploaded files, and app activity needed to provide Nabad features.',
+        'purposes': [
+          'Create and manage user account',
+          'Track vitals and health readings',
+          'Manage medications and reminders',
+          'Store medical ID and emergency information',
+          'Support SOS and nearby medical services features',
+          'Store wearable/device readings when connected',
+          'Improve user safety and app reliability',
+        ],
+        'dataCategories': [
+          'Email/account identifier',
+          'Vitals readings',
+          'Medication records',
+          'Medical ID information',
+          'Emergency contacts',
+          'SOS logs and location when SOS is used',
+          'Wearable/device readings',
+          'Appointments and notifications',
+          'Uploaded medical files if added by user',
+        ],
+        'withdrawalNotice':
+            'User can request withdrawal/deletion from privacy settings or by contacting the Nabad team.',
+      }, SetOptions(merge: true));
 
       if (!mounted) return;
 
-      _showMessage('Account created successfully.');
+      _showMessage('Account created successfully.', isError: false);
 
       Navigator.pushAndRemoveUntil(
         context,
@@ -171,16 +174,85 @@ class _RegisterScreenState extends State<RegisterScreen> {
     }
   }
 
-  void _showMessage(String message) {
+  Future<void> _signUpWithGoogle() async {
+    if (!_privacyConsent || !_healthDataConsent) {
+      _showMessage('You must accept the privacy consent before signing up.');
+      return;
+    }
+
+    setState(() => _isLoading = true);
+
+    try {
+      await _authService.signInWithGoogle(
+        privacyConsentGranted: true,
+        healthDataConsentGranted: true,
+        source: 'google_signup',
+      );
+
+      if (!mounted) return;
+
+      _showMessage('Google account created successfully.', isError: false);
+
+      Navigator.pushAndRemoveUntil(
+        context,
+        MaterialPageRoute(builder: (_) => const MainNavigation()),
+        (route) => false,
+      );
+    } on AuthException catch (e) {
+      _showMessage(e.message);
+    } catch (e) {
+      _showMessage('Google sign-up failed: $e');
+    } finally {
+      if (mounted) {
+        setState(() => _isLoading = false);
+      }
+    }
+  }
+
+  Future<void> _signUpWithApple() async {
+    if (!_privacyConsent || !_healthDataConsent) {
+      _showMessage('You must accept the privacy consent before signing up.');
+      return;
+    }
+
+    setState(() => _isLoading = true);
+
+    try {
+      await _authService.signInWithApple(
+        privacyConsentGranted: true,
+        healthDataConsentGranted: true,
+        source: 'apple_signup',
+      );
+
+      if (!mounted) return;
+
+      _showMessage('Apple account created successfully.', isError: false);
+
+      Navigator.pushAndRemoveUntil(
+        context,
+        MaterialPageRoute(builder: (_) => const MainNavigation()),
+        (route) => false,
+      );
+    } on AuthException catch (e) {
+      _showMessage(e.message);
+    } catch (e) {
+      _showMessage('Apple sign-up failed: $e');
+    } finally {
+      if (mounted) {
+        setState(() => _isLoading = false);
+      }
+    }
+  }
+
+  void _showMessage(String message, {bool isError = true}) {
     if (!mounted) return;
 
     ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(content: Text(message), backgroundColor: VitalRed.vitalRed500),
+      SnackBar(
+        content: Text(message),
+        backgroundColor: isError ? VitalRed.vitalRed500 : Success.success500,
+      ),
     );
-  }
-
-  void _showSocialSignupMessage() {
-    _showMessage('Please use email signup for now so consent is recorded.');
   }
 
   @override
@@ -245,11 +317,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
 
               AuthButton(
                 text: _isLoading ? 'Creating account...' : 'Sign up',
-                onPressed: _isLoading
-                    ? () {}
-                    : () {
-                        _register();
-                      },
+                onPressed: _isLoading ? () {} : _register,
               ),
 
               const SizedBox(height: 24),
@@ -277,17 +345,17 @@ class _RegisterScreenState extends State<RegisterScreen> {
               const SizedBox(height: 20),
 
               SocialButton(
-                text: 'Log In With Google',
+                text: 'Sign Up With Google',
                 assetPath: 'assets/icons/google.svg',
-                onPressed: _showSocialSignupMessage,
+                onPressed: _isLoading ? () {} : _signUpWithGoogle,
               ),
 
               const SizedBox(height: 12),
 
               SocialButton(
-                text: 'Log In With Apple',
+                text: 'Sign Up With Apple',
                 assetPath: 'assets/icons/apple.svg',
-                onPressed: _showSocialSignupMessage,
+                onPressed: _isLoading ? () {} : _signUpWithApple,
               ),
 
               const SizedBox(height: 60),
@@ -300,14 +368,12 @@ class _RegisterScreenState extends State<RegisterScreen> {
                       MaterialPageRoute(builder: (_) => const LoginScreen()),
                     );
                   },
-
                   child: RichText(
                     text: TextSpan(
                       text: 'Already have an account? ',
                       style: AppTypography.bodyMedium.copyWith(
                         color: Neutral.neutral600,
                       ),
-
                       children: [
                         TextSpan(
                           text: 'Login',
@@ -437,7 +503,9 @@ class _PrivacyConsentScreenState extends State<PrivacyConsentScreen> {
         iconTheme: IconThemeData(color: Neutral.neutral800),
         title: Text(
           'Privacy & Data Consent',
-          style: AppTypography.headingSmall.copyWith(color: Neutral.neutral800),
+          style: AppTypography.headingSmall.copyWith(
+            color: Neutral.neutral800,
+          ),
         ),
       ),
       body: SafeArea(
@@ -498,8 +566,7 @@ class _PrivacyConsentScreenState extends State<PrivacyConsentScreen> {
                       text: 'You can request access to your stored data.',
                     ),
                     _BulletText(
-                      text:
-                          'You can request correction or deletion of your data.',
+                      text: 'You can request correction or deletion of your data.',
                     ),
                     _BulletText(
                       text:
@@ -618,7 +685,9 @@ class _SectionTitle extends StatelessWidget {
   Widget build(BuildContext context) {
     return Text(
       text,
-      style: AppTypography.headingSmall.copyWith(color: Neutral.neutral800),
+      style: AppTypography.headingSmall.copyWith(
+        color: Neutral.neutral800,
+      ),
     );
   }
 }

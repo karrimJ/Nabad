@@ -1,5 +1,4 @@
 import 'package:flutter/material.dart';
-import 'register_screen.dart';
 import 'package:mobile/theme/app_colors.dart';
 import 'package:mobile/theme/app_typography.dart';
 
@@ -8,10 +7,10 @@ import '../components/auth_button.dart';
 import '../components/auth_header.dart';
 import '../components/auth_footer.dart';
 import '../components/social_button.dart';
-
 import '../../data/auth_service.dart';
 import '../../../../routes/app_routes.dart';
 import '../../../../widgets/main_navigation.dart';
+import 'register_screen.dart';
 
 class LoginScreen extends StatefulWidget {
   const LoginScreen({super.key});
@@ -79,73 +78,125 @@ class _LoginScreenState extends State<LoginScreen> {
     }
   }
 
-  Future<void> _onForgotPassword() async {
-  final resetEmailController = TextEditingController(
-    text: emailController.text.trim(),
-  );
+  Future<void> _loginWithGoogle() async {
+    setState(() => _isLoading = true);
 
-  final email = await showDialog<String>(
-    context: context,
-    builder: (context) {
-      return AlertDialog(
-        title: const Text('Reset Password'),
-        content: TextField(
-          controller: resetEmailController,
-          keyboardType: TextInputType.emailAddress,
-          decoration: const InputDecoration(
-            labelText: 'Email address',
-            hintText: 'Enter your account email',
-          ),
-        ),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(context),
-            child: const Text('Cancel'),
-          ),
-          ElevatedButton(
-            onPressed: () {
-              Navigator.pop(
-                context,
-                resetEmailController.text.trim(),
-              );
-            },
-            child: const Text('Send Link'),
-          ),
-        ],
+    try {
+      await _authService.signInWithGoogle(source: 'google_login');
+
+      if (!mounted) return;
+
+      _showMessage('Welcome back!', isError: false);
+
+      Navigator.pushAndRemoveUntil(
+        context,
+        MaterialPageRoute(builder: (_) => const MainNavigation()),
+        (route) => false,
       );
-    },
-  );
-
-  resetEmailController.dispose();
-
-  if (email == null) return;
-
-  if (email.isEmpty || !email.contains('@')) {
-    _showMessage('Please enter a valid email address.');
-    return;
-  }
-
-  setState(() => _isResetLoading = true);
-
-  try {
-    await _authService.sendPasswordResetEmail(email: email);
-
-    if (!mounted) return;
-
-    _showMessage(
-      'Password reset link sent. Check your inbox and spam folder.',
-      isError: false,
-    );
-  } on AuthException catch (e) {
-    _showMessage(e.message);
-  } catch (e) {
-    _showMessage('Could not send reset email: $e');
-  } finally {
-    if (mounted) {
-      setState(() => _isResetLoading = false);
+    } on AuthException catch (e) {
+      _showMessage(e.message);
+    } catch (e) {
+      _showMessage('Google login failed: $e');
+    } finally {
+      if (mounted) {
+        setState(() => _isLoading = false);
+      }
     }
   }
-}
+
+  Future<void> _loginWithApple() async {
+    setState(() => _isLoading = true);
+
+    try {
+      await _authService.signInWithApple(source: 'apple_login');
+
+      if (!mounted) return;
+
+      _showMessage('Welcome back!', isError: false);
+
+      Navigator.pushAndRemoveUntil(
+        context,
+        MaterialPageRoute(builder: (_) => const MainNavigation()),
+        (route) => false,
+      );
+    } on AuthException catch (e) {
+      _showMessage(e.message);
+    } catch (e) {
+      _showMessage('Apple login failed: $e');
+    } finally {
+      if (mounted) {
+        setState(() => _isLoading = false);
+      }
+    }
+  }
+
+  Future<void> _onForgotPassword() async {
+    final resetEmailController = TextEditingController(
+      text: emailController.text.trim(),
+    );
+
+    final email = await showDialog<String>(
+      context: context,
+      builder: (context) {
+        return AlertDialog(
+          title: const Text('Reset Password'),
+          content: TextField(
+            controller: resetEmailController,
+            keyboardType: TextInputType.emailAddress,
+            decoration: const InputDecoration(
+              labelText: 'Email address',
+              hintText: 'Enter your account email',
+            ),
+          ),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.pop(context),
+              child: const Text('Cancel'),
+            ),
+            ElevatedButton(
+              onPressed: () {
+                Navigator.pop(
+                  context,
+                  resetEmailController.text.trim(),
+                );
+              },
+              child: const Text('Send Link'),
+            ),
+          ],
+        );
+      },
+    );
+
+    resetEmailController.dispose();
+
+    if (email == null) return;
+
+    if (email.isEmpty || !email.contains('@')) {
+      _showMessage('Please enter a valid email address.');
+      return;
+    }
+
+    setState(() => _isResetLoading = true);
+
+    try {
+      await _authService.sendPasswordResetEmail(email: email);
+
+      if (!mounted) return;
+
+      _showMessage(
+        'Password reset link sent. Check your inbox and spam folder.',
+        isError: false,
+      );
+    } on AuthException catch (e) {
+      _showMessage(e.message);
+    } catch (e) {
+      _showMessage('Could not send reset email: $e');
+    } finally {
+      if (mounted) {
+        setState(() => _isResetLoading = false);
+      }
+    }
+  }
 
   void _showMessage(String message, {bool isError = true}) {
     if (!mounted) return;
@@ -153,14 +204,15 @@ class _LoginScreenState extends State<LoginScreen> {
     ScaffoldMessenger.of(context).showSnackBar(
       SnackBar(
         content: Text(message),
-        backgroundColor:
-            isError ? VitalRed.vitalRed500 : Success.success500,
+        backgroundColor: isError ? VitalRed.vitalRed500 : Success.success500,
       ),
     );
   }
 
   @override
   Widget build(BuildContext context) {
+    final socialDisabled = _isLoading || _isResetLoading;
+
     return Scaffold(
       backgroundColor: Neutral.neutral100,
       body: SafeArea(
@@ -170,15 +222,15 @@ class _LoginScreenState extends State<LoginScreen> {
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               AuthHeader(
-                title: "Good to see you again!",
+                title: 'Good to see you again!',
                 subtitle:
-                    "Log in to check your health stats, follow your progress, and stay on track with your wellbeing.",
+                    'Log in to check your health stats, follow your progress, and stay on track with your wellbeing.',
               ),
 
               const SizedBox(height: 28),
 
               AuthInput(
-                hint: "Enter your email",
+                hint: 'Enter your email',
                 icon: Icons.email_outlined,
                 controller: emailController,
               ),
@@ -186,7 +238,7 @@ class _LoginScreenState extends State<LoginScreen> {
               const SizedBox(height: 16),
 
               AuthInput(
-                hint: "Password",
+                hint: 'Password',
                 icon: Icons.lock_outline,
                 controller: passwordController,
                 isPassword: true,
@@ -209,17 +261,20 @@ class _LoginScreenState extends State<LoginScreen> {
                         activeColor: VitalRed.vitalRed500,
                       ),
                       Text(
-                        "Remember Me",
+                        'Remember Me',
                         style: AppTypography.bodySmall.copyWith(
                           color: Neutral.neutral700,
                         ),
                       ),
                     ],
                   ),
+
                   GestureDetector(
-                    onTap: (_isLoading || _isResetLoading) ? null : _onForgotPassword,
+                    onTap: (_isLoading || _isResetLoading)
+                        ? null
+                        : _onForgotPassword,
                     child: Text(
-                      _isResetLoading ? "Sending..." : "Forgot Password?",
+                      _isResetLoading ? 'Sending...' : 'Forgot Password?',
                       style: AppTypography.bodySmall.copyWith(
                         color: VitalRed.vitalRed500,
                       ),
@@ -245,7 +300,7 @@ class _LoginScreenState extends State<LoginScreen> {
                   Padding(
                     padding: const EdgeInsets.symmetric(horizontal: 8),
                     child: Text(
-                      "Or",
+                      'Or',
                       style: AppTypography.bodySmall.copyWith(
                         color: Neutral.neutral600,
                       ),
@@ -260,17 +315,17 @@ class _LoginScreenState extends State<LoginScreen> {
               const SizedBox(height: 20),
 
               SocialButton(
-                text: "Log In With Google",
-                assetPath: "assets/icons/google.svg",
-                onPressed: () {},
+                text: 'Log In With Google',
+                assetPath: 'assets/icons/google.svg',
+                onPressed: socialDisabled ? () {} : _loginWithGoogle,
               ),
 
               const SizedBox(height: 12),
 
               SocialButton(
-                text: "Log In With Apple",
-                assetPath: "assets/icons/apple.svg",
-                onPressed: () {},
+                text: 'Log In With Apple',
+                assetPath: 'assets/icons/apple.svg',
+                onPressed: socialDisabled ? () {} : _loginWithApple,
               ),
 
               const SizedBox(height: 40),
@@ -278,7 +333,7 @@ class _LoginScreenState extends State<LoginScreen> {
               Center(
                 child: AuthFooter(
                   text: "Don't have an account? ",
-                  actionText: "Sign Up",
+                  actionText: 'Sign Up',
                   onTap: () {
                     Navigator.pushNamed(context, AppRoutes.register);
                   },
