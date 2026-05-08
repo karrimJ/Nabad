@@ -99,8 +99,14 @@ class _ConnectWearableScreenState extends State<ConnectWearableScreen>
         _demoConnected = true;
         _isStartingDemo = false;
         _connectedDevice = null;
-        _status =
-            "Virtual IoT demo is running. New readings are saved every 5 seconds.";
+
+        if (reading.isCritical) {
+          _status =
+              "CRITICAL vitals detected. SOS triggered automatically.";
+        } else {
+          _status =
+              "Virtual IoT demo is running. New readings are saved every 5 seconds.";
+        }
       });
     });
 
@@ -359,6 +365,38 @@ class _ConnectWearableScreenState extends State<ConnectWearableScreen>
     }
   }
 
+  Future<void> _connectCriticalDemoDevice() async {
+    if (_isStartingDemo) return;
+
+    setState(() {
+      _isStartingDemo = true;
+      _status = "Starting CRITICAL vitals demo...";
+    });
+
+    try {
+      await _disconnectCurrentDevice();
+      await _virtualService.startCriticalDemo();
+
+      if (!mounted) return;
+
+      setState(() {
+        _demoConnected = true;
+        _isStartingDemo = false;
+        _connectedDevice = null;
+        _status =
+            "Critical demo is running. SOS will trigger automatically from critical vitals.";
+      });
+    } catch (e) {
+      if (!mounted) return;
+
+      setState(() {
+        _demoConnected = false;
+        _isStartingDemo = false;
+        _status = "Could not start critical demo: $e";
+      });
+    }
+  }
+
   Future<void> _disconnectDemoDevice() async {
     await _virtualService.stop();
 
@@ -569,16 +607,26 @@ class _ConnectWearableScreenState extends State<ConnectWearableScreen>
     return Container(
       padding: const EdgeInsets.all(18),
       decoration: BoxDecoration(
-        color: Colors.white,
+        color: reading.isCritical
+            ? const Color(0xFFFFE6E6)
+            : Colors.white,
         borderRadius: BorderRadius.circular(16),
+        border: reading.isCritical
+            ? Border.all(color: VitalRed.vitalRed500)
+            : null,
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Text(
-            "Latest Virtual IoT Readings",
+            reading.isCritical
+                ? "CRITICAL Virtual IoT Readings"
+                : "Latest Virtual IoT Readings",
             style: AppTypography.bodyLarge.copyWith(
               fontWeight: FontWeight.w700,
+              color: reading.isCritical
+                  ? VitalRed.vitalRed500
+                  : Neutral.neutral900,
             ),
           ),
           const SizedBox(height: 14),
@@ -602,6 +650,25 @@ class _ConnectWearableScreenState extends State<ConnectWearableScreen>
             title: "Blood Pressure",
             value: reading.bloodPressureText,
           ),
+          if (reading.isCritical) ...[
+            const SizedBox(height: 8),
+            Container(
+              width: double.infinity,
+              padding: const EdgeInsets.all(12),
+              decoration: BoxDecoration(
+                color: Colors.white,
+                borderRadius: BorderRadius.circular(12),
+                border: Border.all(color: VitalRed.vitalRed500),
+              ),
+              child: Text(
+                "SOS triggered automatically because vitals reached critical values.",
+                style: AppTypography.bodySmall.copyWith(
+                  color: VitalRed.vitalRed500,
+                  fontWeight: FontWeight.w700,
+                ),
+              ),
+            ),
+          ],
           const SizedBox(height: 8),
           Text(
             "Each new set is saved to Firebase under vitals and iotReadings.",
@@ -662,6 +729,7 @@ class _ConnectWearableScreenState extends State<ConnectWearableScreen>
         if (!_isLoadingDevices)
           ..._pairedDevices.map((device) => _deviceTile(device)),
         _demoDeviceTile(),
+        _criticalDemoTile(),
         if (!_isLoadingDevices && _pairedDevices.isEmpty)
           Padding(
             padding: const EdgeInsets.only(top: 8),
@@ -782,6 +850,62 @@ class _ConnectWearableScreenState extends State<ConnectWearableScreen>
                   : _demoConnected
                       ? "Stop"
                       : "Connect",
+              style: TextStyle(color: VitalRed.vitalRed500),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _criticalDemoTile() {
+    return Container(
+      margin: const EdgeInsets.only(bottom: 10),
+      padding: const EdgeInsets.all(12),
+      decoration: BoxDecoration(
+        color: const Color(0xFFFFE6E6),
+        borderRadius: BorderRadius.circular(14),
+        border: Border.all(color: VitalRed.vitalRed500),
+      ),
+      child: Row(
+        children: [
+          const Icon(
+            Icons.warning_amber_rounded,
+            size: 30,
+            color: VitalRed.vitalRed500,
+          ),
+          const SizedBox(width: 12),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  "Critical Vitals SOS Demo",
+                  style: AppTypography.bodyMedium.copyWith(
+                    fontWeight: FontWeight.w700,
+                    color: VitalRed.vitalRed500,
+                  ),
+                ),
+                const SizedBox(height: 4),
+                Text(
+                  "Generates critical vitals and creates an SOS log automatically.",
+                  style: AppTypography.bodySmall.copyWith(
+                    color: Neutral.neutral700,
+                  ),
+                ),
+              ],
+            ),
+          ),
+          OutlinedButton(
+            onPressed: _isStartingDemo ? null : _connectCriticalDemoDevice,
+            style: OutlinedButton.styleFrom(
+              side: BorderSide(color: VitalRed.vitalRed500),
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(20),
+              ),
+            ),
+            child: Text(
+              _isStartingDemo ? "Starting..." : "Trigger",
               style: TextStyle(color: VitalRed.vitalRed500),
             ),
           ),
