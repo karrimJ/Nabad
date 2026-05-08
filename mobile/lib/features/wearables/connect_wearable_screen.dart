@@ -1,16 +1,17 @@
 import 'dart:async';
+import 'dart:io';
 
+import 'package:app_settings/app_settings.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_blue_plus/flutter_blue_plus.dart';
+import 'package:mobile/features/wearables/components/InfoBox.dart';
+import 'package:mobile/features/wearables/components/Permission_Box.dart';
+import 'package:mobile/features/wearables/components/SUPPORTED_DATA.dart';
 import 'package:mobile/features/wearables/wearable_ble_service.dart';
+import 'package:mobile/routes/app_routes.dart';
 import 'package:mobile/theme/app_colors.dart';
 import 'package:mobile/theme/app_typography.dart';
-import 'package:mobile/features/wearables/components/bluetooth_card.dart';
-import 'package:mobile/features/wearables/components/Available_Devices_Section.dart';
-import 'package:mobile/features/wearables/components/InfoBox.dart';
-import 'package:mobile/features/wearables/components/SUPPORTED_DATA.dart';
-import 'package:mobile/features/wearables/components/Permission_Box.dart';
-import '../../routes/app_routes.dart';
+import 'package:permission_handler/permission_handler.dart';
 
 class ConnectWearableScreen extends StatefulWidget {
   const ConnectWearableScreen({super.key});
@@ -19,116 +20,315 @@ class ConnectWearableScreen extends StatefulWidget {
   State<ConnectWearableScreen> createState() => _ConnectWearableScreenState();
 }
 
-class _ConnectWearableScreenState extends State<ConnectWearableScreen> {
+class _ConnectWearableScreenState extends State<ConnectWearableScreen>
+    with WidgetsBindingObserver {
   final WearableBleService _bleService = WearableBleService();
 
-  StreamSubscription<List<ScanResult>>? _scanSubscription;
+  StreamSubscription<BluetoothAdapterState>? _adapterSubscription;
   StreamSubscription<int>? _heartRateSubscription;
 
-  List<ScanResult> _devices = [];
-  bool _isScanning = false;
+  List<BluetoothDevice> _pairedDevices = [];
+
+  BluetoothDevice? _connectedDevice;
+
+  bool _isBluetoothOn = false;
+  bool _isLoadingDevices = false;
   bool _isConnecting = false;
-  String _status = "Press scan to find nearby heart-rate devices.";
+  bool _demoConnected = false;
+
   int? _latestHeartRate;
+
+  String _status =
+      "Turn on Bluetooth, pair your watch from phone settings, then connect here.";
+
+  static const String _demoName = "Demo Wearable Device";
 
   @override
   void initState() {
     super.initState();
 
+    WidgetsBinding.instance.addObserver(this);
+
+    _adapterSubscription = FlutterBluePlus.adapterState.listen((state) {
+      final isOn = state == BluetoothAdapterState.on;
+
+      if (!mounted) return;
+
+      setState(() {
+        _isBluetoothOn = isOn;
+
+        if (!isOn) {
+          _pairedDevices = [];
+          _connectedDevice = null;
+          _demoConnected = false;
+          _status = "Bluetooth is off. Turn it on from settings.";
+        } else {
+          _status = "Bluetooth is on. Loading paired devices...";
+        }
+      });
+
+      if (isOn) {
+        _loadPairedDevices();
+      }
+    });
+
     _heartRateSubscription = _bleService.heartRateStream.listen((bpm) {
+      if (!mounted) return;
+
       setState(() {
         _latestHeartRate = bpm;
         _status = "Receiving heart rate from wearable.";
       });
     });
+
+    _refreshBluetoothState();
   }
 
-  Future<void> _startScan() async {
-    setState(() {
-      _isScanning = true;
-      _devices = [];
-      _status = "Scanning for heart-rate devices...";
-    });
+  @override
+  void didChangeAppLifecycleState(AppLifecycleState state) {
+    if (state == AppLifecycleState.resumed) {
+      _refreshBluetoothState();
+    }
+  }
 
+  Future<void> _refreshBluetoothState() async {
     try {
-      await _scanSubscription?.cancel();
+      final state = await FlutterBluePlus.adapterState.first;
+      final isOn = state == BluetoothAdapterState.on;
 
-      _scanSubscription = _bleService.scanResults.listen((results) {
-        final unique = <String, ScanResult>{};
+      if (!mounted) return;
 
-        for (final result in results) {
-          final id = result.device.remoteId.toString();
-          unique[id] = result;
-        }
-
-        setState(() {
-          _devices = unique.values.toList();
-        });
+      setState(() {
+        _isBluetoothOn = isOn;
       });
 
-      await _bleService.startScan();
-
-      await FlutterBluePlus.isScanning.where((scanning) => !scanning).first;
-
-      if (mounted) {
-        setState(() {
-          _isScanning = false;
-          if (_devices.isEmpty) {
-            _status =
-                "No heart-rate devices found. Put your Polar M430 in HR broadcast mode and scan again.";
-          } else {
-            _status = "Select your wearable from the list.";
-          }
-        });
+      if (isOn) {
+        await _loadPairedDevices();
       }
     } catch (e) {
+      if (!mounted) return;
+
       setState(() {
-        _isScanning = false;
-        _status = "Bluetooth error: $e";
+        _status = "Could not check Bluetooth state: $e";
       });
     }
   }
 
-  Future<void> _connect(ScanResult result) async {
+  Future<bool> _requestBluetoothPermissions() async {
+    if (!Platform.isAndroid) return true;
+
+    final statuses = await [
+      Permission.bluetoothScan,
+      Permission.bluetoothConnect,
+      Permission.locationWhenInUse,
+    ].request();
+
+    final hasBlockedPermission = statuses.values.any(
+      (status) =>
+          status.isDenied ||
+          status.isPermanentlyDenied ||
+          status.isRestricted,
+    );
+
+    if (hasBlockedPermission) {
+      if (!mounted) return false;
+
+      setState(() {
+        _status = "Bluetooth permission is required to connect wearables.";
+      });
+
+      return false;
+    }
+
+    return true;
+  }
+
+  Future<void> _onBluetoothSwitchChanged(bool value) async {
+    final allowed = await _requestBluetoothPermissions();
+
+    if (!allowed) return;
+
+    if (value) {
+      try {
+        if (Platform.isAndroid) {
+          await FlutterBluePlus.turnOn();
+        }
+      } catch (_) {
+        // Some Android versions do not allow silent Bluetooth changes.
+      }
+
+      await _openBluetoothSettings();
+    } else {
+      await _disconnectCurrentDevice();
+
+      try {
+        if (Platform.isAndroid) {
+          await FlutterBluePlus.turnOff();
+          await _refreshBluetoothState();
+          return;
+        }
+      } catch (_) {
+        // On newer Android versions, the app may not be allowed to turn Bluetooth off.
+      }
+
+      await _openBluetoothSettings();
+    }
+  }
+
+  Future<void> _openBluetoothSettings() async {
+    try {
+      await AppSettings.openAppSettings(type: AppSettingsType.bluetooth);
+    } catch (_) {
+      await AppSettings.openAppSettings();
+    }
+  }
+
+  Future<void> _loadPairedDevices() async {
+    if (_isLoadingDevices) return;
+
     setState(() {
-      _isConnecting = true;
-      _status = "Connecting to device...";
+      _isLoadingDevices = true;
     });
 
     try {
-      await _bleService.connectToDevice(result.device);
+      final allowed = await _requestBluetoothPermissions();
 
-      final name = _deviceName(result);
+      if (!allowed) {
+        if (!mounted) return;
+
+        setState(() {
+          _isLoadingDevices = false;
+        });
+
+        return;
+      }
+
+      final devices = Platform.isAndroid
+          ? await FlutterBluePlus.bondedDevices
+          : <BluetoothDevice>[];
+
+      final uniqueDevices = <String, BluetoothDevice>{};
+
+      for (final device in devices) {
+        uniqueDevices[device.remoteId.toString()] = device;
+      }
+
+      final sortedDevices = uniqueDevices.values.toList()
+        ..sort((a, b) => _deviceName(a).compareTo(_deviceName(b)));
+
+      if (!mounted) return;
 
       setState(() {
-        _isConnecting = false;
-        _status = "Connected to $name";
+        _pairedDevices = sortedDevices;
+        _isLoadingDevices = false;
+
+        if (_pairedDevices.isEmpty) {
+          _status =
+              "No paired devices found. Pair your watch from phone Bluetooth settings first.";
+        } else {
+          _status = "Select a paired wearable from the list.";
+        }
       });
     } catch (e) {
+      if (!mounted) return;
+
       setState(() {
-        _isConnecting = false;
-        _status = "Connection failed: $e";
+        _isLoadingDevices = false;
+        _status = "Could not load paired devices: $e";
       });
     }
   }
 
-  String _deviceName(ScanResult result) {
-    if (result.device.platformName.isNotEmpty) {
-      return result.device.platformName;
+  Future<void> _connectPairedDevice(BluetoothDevice device) async {
+    final allowed = await _requestBluetoothPermissions();
+
+    if (!allowed) return;
+
+    setState(() {
+      _isConnecting = true;
+      _demoConnected = false;
+      _status = "Connecting to ${_deviceName(device)}...";
+    });
+
+    try {
+      await _bleService.connectToDevice(device);
+
+      if (!mounted) return;
+
+      setState(() {
+        _connectedDevice = device;
+        _isConnecting = false;
+        _status = "Connected to ${_deviceName(device)}.";
+      });
+    } catch (e) {
+      if (!mounted) return;
+
+      setState(() {
+        _isConnecting = false;
+        _connectedDevice = null;
+        _status =
+            "Connection failed. This device may not expose heart-rate data through BLE. Error: $e";
+      });
+    }
+  }
+
+  Future<void> _disconnectCurrentDevice() async {
+    try {
+      await _bleService.disconnect();
+    } catch (_) {}
+
+    if (!mounted) return;
+
+    setState(() {
+      _connectedDevice = null;
+      _demoConnected = false;
+      _latestHeartRate = null;
+      _status = _isBluetoothOn
+          ? "Disconnected. Select a paired wearable from the list."
+          : "Bluetooth is off.";
+    });
+  }
+
+  void _connectDemoDevice() {
+    setState(() {
+      _demoConnected = true;
+      _connectedDevice = null;
+      _latestHeartRate = 76;
+      _status = "Connected to $_demoName in demo mode.";
+    });
+  }
+
+  void _disconnectDemoDevice() {
+    setState(() {
+      _demoConnected = false;
+      _latestHeartRate = null;
+      _status = "Demo wearable disconnected.";
+    });
+  }
+
+  String _deviceName(BluetoothDevice device) {
+    final name = device.platformName.trim();
+
+    if (name.isNotEmpty) {
+      return name;
     }
 
-    if (result.advertisementData.advName.isNotEmpty) {
-      return result.advertisementData.advName;
-    }
+    return "Paired Wearable";
+  }
 
-    return result.device.remoteId.toString();
+  bool _isDeviceConnected(BluetoothDevice device) {
+    return _connectedDevice?.remoteId.toString() == device.remoteId.toString();
   }
 
   @override
   void dispose() {
-    _scanSubscription?.cancel();
+    WidgetsBinding.instance.removeObserver(this);
+
+    _adapterSubscription?.cancel();
     _heartRateSubscription?.cancel();
+
     _bleService.dispose();
+
     super.dispose();
   }
 
@@ -158,9 +358,15 @@ class _ConnectWearableScreenState extends State<ConnectWearableScreen> {
         padding: const EdgeInsets.all(16),
         child: ListView(
           children: [
-            BluetoothCard(),
+            _bluetoothCard(),
             const SizedBox(height: 20),
-            AvailableDevicesSection(),
+            _statusCard(),
+            if (_latestHeartRate != null) ...[
+              const SizedBox(height: 20),
+              _heartRateCard(),
+            ],
+            const SizedBox(height: 20),
+            _availableDevicesSection(),
             const SizedBox(height: 20),
             InfoBox(),
             const SizedBox(height: 20),
@@ -169,6 +375,49 @@ class _ConnectWearableScreenState extends State<ConnectWearableScreen> {
             PermissionBox(),
           ],
         ),
+      ),
+    );
+  }
+
+  Widget _bluetoothCard() {
+    return Container(
+      padding: const EdgeInsets.all(16),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(16),
+      ),
+      child: Row(
+        children: [
+          CircleAvatar(
+            backgroundColor: VitalRed.vitalRed500,
+            radius: 22,
+            child: const Icon(Icons.bluetooth, color: Colors.white),
+          ),
+          const SizedBox(width: 12),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  _isBluetoothOn ? "Bluetooth is on" : "Bluetooth is off",
+                  style: AppTypography.headingSmall,
+                ),
+                const SizedBox(height: 4),
+                Text(
+                  _isBluetoothOn
+                      ? "Tap the switch to open Bluetooth settings."
+                      : "Turn Bluetooth on to pair your watch.",
+                  style: AppTypography.bodySmall,
+                ),
+              ],
+            ),
+          ),
+          Switch(
+            value: _isBluetoothOn,
+            onChanged: _onBluetoothSwitchChanged,
+            activeColor: VitalRed.vitalRed500,
+          ),
+        ],
       ),
     );
   }
@@ -182,7 +431,7 @@ class _ConnectWearableScreenState extends State<ConnectWearableScreen> {
       ),
       child: Row(
         children: [
-          const Icon(Icons.bluetooth, color: VitalRed.vitalRed500),
+          const Icon(Icons.info_outline, color: VitalRed.vitalRed500),
           const SizedBox(width: 12),
           Expanded(
             child: Text(
@@ -190,29 +439,12 @@ class _ConnectWearableScreenState extends State<ConnectWearableScreen> {
               style: AppTypography.bodyMedium,
             ),
           ),
+          if (_isBluetoothOn)
+            IconButton(
+              onPressed: _loadPairedDevices,
+              icon: const Icon(Icons.refresh),
+            ),
         ],
-      ),
-    );
-  }
-
-  Widget _scanButton() {
-    return ElevatedButton.icon(
-      onPressed: _isScanning || _isConnecting ? null : _startScan,
-      icon: _isScanning
-          ? const SizedBox(
-              width: 18,
-              height: 18,
-              child: CircularProgressIndicator(strokeWidth: 2),
-            )
-          : const Icon(Icons.search),
-      label: Text(_isScanning ? "Scanning..." : "Scan for Wearables"),
-      style: ElevatedButton.styleFrom(
-        backgroundColor: VitalRed.vitalRed500,
-        foregroundColor: Colors.white,
-        padding: const EdgeInsets.symmetric(vertical: 14),
-        shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.circular(30),
-        ),
       ),
     );
   }
@@ -221,7 +453,7 @@ class _ConnectWearableScreenState extends State<ConnectWearableScreen> {
     return Container(
       padding: const EdgeInsets.all(18),
       decoration: BoxDecoration(
-        color: Neutral.neutral300,
+        color: Colors.white,
         borderRadius: BorderRadius.circular(16),
       ),
       child: Column(
@@ -234,7 +466,7 @@ class _ConnectWearableScreenState extends State<ConnectWearableScreen> {
           ),
           const SizedBox(height: 8),
           Text(
-            _latestHeartRate == null ? "--" : "$_latestHeartRate",
+            "$_latestHeartRate",
             style: AppTypography.headingLarge.copyWith(
               color: VitalRed.vitalRed500,
               fontSize: 48,
@@ -250,52 +482,141 @@ class _ConnectWearableScreenState extends State<ConnectWearableScreen> {
     );
   }
 
-  Widget _deviceTile(ScanResult result) {
-    final name = _deviceName(result);
+  Widget _availableDevicesSection() {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Text(
+          "Available Devices",
+          style: AppTypography.headingSmall,
+        ),
+        const SizedBox(height: 12),
+        if (_isLoadingDevices)
+          const Center(
+            child: Padding(
+              padding: EdgeInsets.all(16),
+              child: CircularProgressIndicator(),
+            ),
+          ),
+        if (!_isLoadingDevices)
+          ..._pairedDevices.map((device) => _deviceTile(device)),
+        _demoDeviceTile(),
+        if (!_isLoadingDevices && _pairedDevices.isEmpty)
+          Padding(
+            padding: const EdgeInsets.only(top: 8),
+            child: Text(
+              "Only paired devices are shown. Pair your Polar M430 or watch from phone Bluetooth settings first.",
+              style: AppTypography.bodySmall.copyWith(
+                color: Neutral.neutral700,
+              ),
+            ),
+          ),
+      ],
+    );
+  }
+
+  Widget _deviceTile(BluetoothDevice device) {
+    final isConnected = _isDeviceConnected(device);
 
     return Container(
       margin: const EdgeInsets.only(bottom: 10),
+      padding: const EdgeInsets.all(12),
       decoration: BoxDecoration(
-        color: Neutral.neutral300,
+        color: Colors.white,
         borderRadius: BorderRadius.circular(14),
       ),
-      child: ListTile(
-        leading: const Icon(Icons.watch, color: VitalRed.vitalRed500),
-        title: Text(
-          name,
-          style: AppTypography.bodyLarge.copyWith(
-            fontWeight: FontWeight.w700,
+      child: Row(
+        children: [
+          const Icon(Icons.watch, size: 28),
+          const SizedBox(width: 12),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  _deviceName(device),
+                  style: AppTypography.bodyMedium,
+                ),
+                const SizedBox(height: 4),
+                Text(
+                  "Paired device",
+                  style: AppTypography.bodySmall.copyWith(
+                    color: Neutral.neutral700,
+                  ),
+                ),
+              ],
+            ),
           ),
-        ),
-        subtitle: Text(
-          result.device.remoteId.toString(),
-          style: AppTypography.bodySmall,
-        ),
-        trailing: _isConnecting
-            ? const SizedBox(
-                width: 18,
-                height: 18,
-                child: CircularProgressIndicator(strokeWidth: 2),
-              )
-            : const Icon(Icons.chevron_right),
-        onTap: _isConnecting ? null : () => _connect(result),
+          OutlinedButton(
+            onPressed: _isConnecting
+                ? null
+                : () {
+                    if (isConnected) {
+                      _disconnectCurrentDevice();
+                    } else {
+                      _connectPairedDevice(device);
+                    }
+                  },
+            style: OutlinedButton.styleFrom(
+              side: BorderSide(color: VitalRed.vitalRed500),
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(20),
+              ),
+            ),
+            child: Text(
+              isConnected ? "Connected" : "Connect",
+              style: TextStyle(color: VitalRed.vitalRed500),
+            ),
+          ),
+        ],
       ),
     );
   }
 
-  Widget _helpBox() {
+  Widget _demoDeviceTile() {
     return Container(
-      padding: const EdgeInsets.all(16),
+      margin: const EdgeInsets.only(bottom: 10),
+      padding: const EdgeInsets.all(12),
       decoration: BoxDecoration(
-        color: Neutral.neutral300,
-        borderRadius: BorderRadius.circular(16),
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(14),
       ),
-      child: Text(
-        "For Polar M430: start a training session, open the quick menu, then turn on HR visible to other device. Keep the watch close to your phone while scanning.",
-        style: AppTypography.bodySmall.copyWith(
-          color: Neutral.neutral700,
-          height: 1.5,
-        ),
+      child: Row(
+        children: [
+          const Icon(Icons.watch, size: 28),
+          const SizedBox(width: 12),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  _demoName,
+                  style: AppTypography.bodyMedium,
+                ),
+                const SizedBox(height: 4),
+                Text(
+                  "Demo only",
+                  style: AppTypography.bodySmall.copyWith(
+                    color: Neutral.neutral700,
+                  ),
+                ),
+              ],
+            ),
+          ),
+          OutlinedButton(
+            onPressed: _demoConnected ? _disconnectDemoDevice : _connectDemoDevice,
+            style: OutlinedButton.styleFrom(
+              side: BorderSide(color: VitalRed.vitalRed500),
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(20),
+              ),
+            ),
+            child: Text(
+              _demoConnected ? "Connected" : "Connect",
+              style: TextStyle(color: VitalRed.vitalRed500),
+            ),
+          ),
+        ],
       ),
     );
   }
