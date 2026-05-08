@@ -2,7 +2,6 @@ import 'package:flutter/material.dart';
 import 'package:mobile/features/auth/presentation/components/auth_button.dart';
 import 'package:mobile/theme/app_colors.dart';
 import 'package:mobile/theme/app_typography.dart';
-import '../../routes/app_routes.dart';
 import '../../widgets/main_navigation.dart';
 import 'package:mobile/routes/app_routes.dart';
 
@@ -81,14 +80,14 @@ class WearablesScreen extends StatelessWidget {
               Container(
                 width: 60,
                 height: 60,
+                padding: const EdgeInsets.all(12),
                 decoration: BoxDecoration(
                   color: Neutral.neutral800,
                   borderRadius: BorderRadius.circular(12),
                 ),
-                child: const Icon(
-                  Icons.watch,
-                  color: Neutral.neutral100,
-                  size: 32,
+                child: Image.asset(
+                  'assets/images/smartwatch.png',
+                  fit: BoxFit.contain,
                 ),
               ),
               const SizedBox(width: 16),
@@ -118,11 +117,11 @@ class WearablesScreen extends StatelessWidget {
           ),
           const SizedBox(height: 16),
           AuthButton(
-  text: 'Connect Wearable',
-  onPressed: () {
-    Navigator.pushNamed(context, AppRoutes.connectWearable);
-  },
-),
+            text: 'Connect Wearable',
+            onPressed: () {
+              Navigator.pushNamed(context, AppRoutes.connectWearable);
+            },
+          ),
         ],
       ),
     );
