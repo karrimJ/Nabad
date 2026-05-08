@@ -1,24 +1,18 @@
 import 'package:flutter/material.dart';
 
 import '../features/medications/data/medication_model.dart';
-
 import '../features/profile/profile_screen.dart';
 import '../features/profile/edit_profile_screen.dart';
-
 import '../features/medications/presentation/screens/medication_list_screen.dart';
 import '../features/medications/presentation/screens/add_medication_screen.dart';
 import '../features/medications/presentation/screens/medication_details_screen.dart';
 import '../features/medications/presentation/screens/edit_medication_screen.dart';
-
 import '../features/medicalid/screens/medical_id_screen.dart';
 import '../features/medicalid/screens/edit_medical_id_screen.dart';
-
 import '../features/notifications/notifications_screen.dart';
 import '../features/notifications/notifications1_screen.dart';
-
 import '../features/wearables/wearables.dart';
 import '../features/wearables/connect_wearable_screen.dart';
-
 import '../features/vitals/screens/heart_rate_details_screen.dart';
 import '../features/vitals/screens/heart_rate_history_screen.dart';
 import '../features/vitals/screens/blood_pressure_details_screen.dart';
@@ -26,21 +20,18 @@ import '../features/vitals/screens/temperature_details_screen.dart';
 import '../features/vitals/screens/glucose_details_screen.dart';
 import '../features/vitals/screens/Oxygen_level_screen.dart';
 import '../features/vitals/screens/add_manual_reading_screen.dart';
-
 import '../features/vitals/screens/oxygen_history_screen.dart';
 import '../features/vitals/screens/temperature_history_screen.dart';
 import '../features/vitals/screens/glucose_history_screen.dart';
 import '../features/vitals/screens/blood_pressure_history_screen.dart';
-
 import '../features/auth/presentation/screens/login_screen.dart';
 import '../features/auth/presentation/screens/register_screen.dart';
-
 import '../features/emergencies/emergency.dart';
+import '../features/emergencies/emergency_contacts_screen.dart';
 import '../features/assistant/assistant.dart';
 
 class AppRoutes {
   static const String home = '/';
-
   static const String login = '/login';
   static const String register = '/register';
 
@@ -79,6 +70,8 @@ class AppRoutes {
   static const String addReading = '/vitals/add-reading';
 
   static const String emergency = '/emergency';
+  static const String emergencyContacts = '/emergency/contacts';
+
   static const String assistant = '/assistant';
 
   static Map<String, WidgetBuilder> getRoutes() {
@@ -119,6 +112,8 @@ class AppRoutes {
       addReading: (context) => const AddReadingScreen(),
 
       emergency: (context) => const EmergencyScreen(),
+      emergencyContacts: (context) => const EmergencyContactsScreen(),
+
       assistant: (context) => const NabadAssistantScreen(),
     };
   }
