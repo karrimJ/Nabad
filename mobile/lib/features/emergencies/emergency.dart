@@ -1,11 +1,11 @@
 import 'package:flutter/material.dart';
-import 'package:cloud_firestore/cloud_firestore.dart';
-import 'package:geolocator/geolocator.dart';
-import 'package:url_launcher/url_launcher.dart';
 import 'package:mobile/theme/app_colors.dart';
 import 'package:mobile/theme/app_typography.dart';
-import '../../routes/app_routes.dart';
 import 'package:mobile/widgets/main_navigation.dart';
+
+import '../../routes/app_routes.dart';
+import 'data/emergency_service.dart';
+import 'data/sos_alert_model.dart';
 
 class EmergencyScreen extends StatefulWidget {
   const EmergencyScreen({super.key});
@@ -15,105 +15,79 @@ class EmergencyScreen extends StatefulWidget {
 }
 
 class _EmergencyScreenState extends State<EmergencyScreen> {
+  final EmergencyService _emergencyService = EmergencyService();
+
   bool _isSendingSOS = false;
-
-  Future<Position?> _getLocation() async {
-    bool serviceEnabled = await Geolocator.isLocationServiceEnabled();
-
-    if (!serviceEnabled) {
-      _showMessage('Please enable location services');
-      return null;
-    }
-
-    LocationPermission permission = await Geolocator.checkPermission();
-
-    if (permission == LocationPermission.denied) {
-      permission = await Geolocator.requestPermission();
-
-      if (permission == LocationPermission.denied) {
-        _showMessage('Location permission denied');
-        return null;
-      }
-    }
-
-    if (permission == LocationPermission.deniedForever) {
-      _showMessage('Location permission permanently denied');
-      return null;
-    }
-
-    return await Geolocator.getCurrentPosition();
-  }
-
-  Future<Map<String, dynamic>?> _findNearestHospital(Position userPos) async {
-    final query = await FirebaseFirestore.instance
-        .collection('services')
-        .where('type', isEqualTo: 'Hospital')
-        .where('isEmergencyAvailable', isEqualTo: true)
-        .get();
-
-    if (query.docs.isEmpty) return null;
-
-    Map<String, dynamic>? nearest;
-    double minDistance = double.infinity;
-
-    for (final doc in query.docs) {
-      final data = doc.data();
-      final loc = data['location'] as GeoPoint?;
-
-      if (loc == null) continue;
-
-      final distance = Geolocator.distanceBetween(
-        userPos.latitude,
-        userPos.longitude,
-        loc.latitude,
-        loc.longitude,
-      );
-
-      if (distance < minDistance) {
-        minDistance = distance;
-        nearest = {
-          ...data,
-          'distanceKm': (distance / 1000).toStringAsFixed(1),
-        };
-      }
-    }
-
-    return nearest;
-  }
+  String _sosStatusMessage = 'Getting location...';
 
   Future<void> _triggerSOS() async {
+    if (_isSendingSOS) return;
+
     setState(() {
       _isSendingSOS = true;
+      _sosStatusMessage = 'Getting location...';
     });
 
-    final position = await _getLocation();
+    try {
+      final result = await _emergencyService.triggerSOS(
+        onStatus: (message) {
+          if (!mounted) return;
 
-    if (position == null) {
+          setState(() {
+            _sosStatusMessage = message;
+          });
+        },
+      );
+
+      if (!mounted) return;
+
       setState(() {
         _isSendingSOS = false;
       });
-      return;
+
+      _showMessage('SOS sent successfully', isSuccess: true);
+
+      _showSOSDialog(
+        result.position.latitude,
+        result.position.longitude,
+        result.nearestHospital,
+      );
+    } catch (error) {
+      if (!mounted) return;
+
+      setState(() {
+        _isSendingSOS = false;
+      });
+
+      _showMessage(_cleanError(error));
     }
-
-    final nearest = await _findNearestHospital(position);
-
-    await FirebaseFirestore.instance.collection('sosAlerts').add({
-      'location': GeoPoint(position.latitude, position.longitude),
-      'timestamp': FieldValue.serverTimestamp(),
-      'nearestHospital': nearest?['name'] ?? 'Unknown',
-      'status': 'active',
-    });
-
-    setState(() {
-      _isSendingSOS = false;
-    });
-
-    if (!mounted) return;
-
-    _showSOSDialog(position, nearest);
   }
 
-  void _showSOSDialog(Position pos, Map<String, dynamic>? hospital) {
+  Future<void> _callNumber(String number) async {
+    try {
+      await _emergencyService.callNumber(number);
+    } catch (error) {
+      _showMessage(_cleanError(error));
+    }
+  }
+
+  Future<void> _sendEmergencySMS() async {
+    try {
+      await _emergencyService.sendEmergencySMS();
+    } catch (error) {
+      _showMessage(_cleanError(error));
+    }
+  }
+
+  String _cleanError(Object error) {
+    return error.toString().replaceFirst('Exception: ', '');
+  }
+
+  void _showSOSDialog(
+    double latitude,
+    double longitude,
+    NearbyHospital? hospital,
+  ) {
     showDialog(
       context: context,
       builder: (ctx) {
@@ -144,14 +118,14 @@ class _EmergencyScreenState extends State<EmergencyScreen> {
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               Text(
-                '📍 Your Location:',
+                'Your Location:',
                 style: AppTypography.bodyMedium.copyWith(
                   fontWeight: FontWeight.w600,
                 ),
               ),
               const SizedBox(height: 4),
               Text(
-                'Lat: ${pos.latitude.toStringAsFixed(4)}\nLng: ${pos.longitude.toStringAsFixed(4)}',
+                'Lat: ${latitude.toStringAsFixed(4)}\nLng: ${longitude.toStringAsFixed(4)}',
                 style: AppTypography.bodySmall.copyWith(
                   color: Neutral.neutral700,
                 ),
@@ -159,23 +133,30 @@ class _EmergencyScreenState extends State<EmergencyScreen> {
               const SizedBox(height: 12),
               if (hospital != null) ...[
                 Text(
-                  '🏥 Nearest Hospital:',
+                  'Nearest Hospital:',
                   style: AppTypography.bodyMedium.copyWith(
                     fontWeight: FontWeight.w600,
                   ),
                 ),
                 const SizedBox(height: 4),
                 Text(
-                  '${hospital['name']}\n${hospital['distanceKm']} km away',
+                  '${hospital.name}\n${hospital.distanceKm.toStringAsFixed(1)} km away',
                   style: AppTypography.bodySmall.copyWith(
                     color: Neutral.neutral700,
                   ),
                 ),
                 const SizedBox(height: 4),
                 Text(
-                  '📞 ${hospital['phoneNumber'] ?? 'No phone'}',
+                  hospital.phoneNumber ?? 'No phone',
                   style: AppTypography.bodySmall.copyWith(
                     color: VitalRed.vitalRed500,
+                  ),
+                ),
+              ] else ...[
+                Text(
+                  'No emergency hospital found nearby.',
+                  style: AppTypography.bodySmall.copyWith(
+                    color: Neutral.neutral700,
                   ),
                 ),
               ],
@@ -200,7 +181,7 @@ class _EmergencyScreenState extends State<EmergencyScreen> {
               ),
               onPressed: () {
                 Navigator.pop(ctx);
-                _callNumber(hospital?['phoneNumber'] ?? '140');
+                _callNumber(hospital?.phoneNumber ?? '140');
               },
               child: const Text('Call Hospital'),
             ),
@@ -210,44 +191,13 @@ class _EmergencyScreenState extends State<EmergencyScreen> {
     );
   }
 
-  Future<void> _callNumber(String number) async {
-    final uri = Uri.parse('tel:$number');
-
-    if (await canLaunchUrl(uri)) {
-      await launchUrl(uri);
-    } else {
-      _showMessage('Could not open phone app');
-    }
-  }
-
-  Future<void> _sendEmergencySMS() async {
-    final position = await _getLocation();
-
-    if (position == null) return;
-
-    final mapsLink =
-        'https://maps.google.com/?q=${position.latitude},${position.longitude}';
-
-    final body = Uri.encodeComponent(
-      'EMERGENCY! I need help. My location: $mapsLink',
-    );
-
-    final uri = Uri.parse('sms:?body=$body');
-
-    if (await canLaunchUrl(uri)) {
-      await launchUrl(uri);
-    } else {
-      _showMessage('Could not open SMS');
-    }
-  }
-
-  void _showMessage(String msg) {
+  void _showMessage(String msg, {bool isSuccess = false}) {
     if (!mounted) return;
 
     ScaffoldMessenger.of(context).showSnackBar(
       SnackBar(
         content: Text(msg),
-        backgroundColor: VitalRed.vitalRed500,
+        backgroundColor: isSuccess ? Success.success500 : VitalRed.vitalRed500,
       ),
     );
   }
@@ -262,18 +212,18 @@ class _EmergencyScreenState extends State<EmergencyScreen> {
         scrolledUnderElevation: 0,
         leading: IconButton(
           icon: const Icon(
-          Icons.arrow_back,
-          color: Neutral.neutral900,
-        ),
-        onPressed: () {
-        Navigator.pushAndRemoveUntil(
-        context,
-        MaterialPageRoute(
-        builder: (_) => const MainNavigation(),
-        ),
-        (route) => false,
-        );
-        },
+            Icons.arrow_back,
+            color: Neutral.neutral900,
+          ),
+          onPressed: () {
+            Navigator.pushAndRemoveUntil(
+              context,
+              MaterialPageRoute(
+                builder: (_) => const MainNavigation(),
+              ),
+              (route) => false,
+            );
+          },
         ),
         title: Text(
           'Emergency',
@@ -298,10 +248,11 @@ class _EmergencyScreenState extends State<EmergencyScreen> {
             ),
             const SizedBox(height: 16),
             if (_isSendingSOS)
-              const Center(
+              Center(
                 child: Text(
-                  'Sending SOS... Getting location...',
-                  style: TextStyle(
+                  'Sending SOS...\n$_sosStatusMessage',
+                  textAlign: TextAlign.center,
+                  style: AppTypography.bodyMedium.copyWith(
                     color: VitalRed.vitalRed500,
                     fontWeight: FontWeight.w600,
                   ),
