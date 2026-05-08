@@ -356,7 +356,11 @@ class HomeScreen extends StatelessWidget {
             ),
 
             ListTile(
-              leading: const Icon(Icons.watch),
+          leading: Image.asset(
+  "assets/images/smartwatch.png",
+  width: 28,
+  height: 28,
+),
               title: const Text('Wearables'),
               onTap: () {
                 _goTo(context, AppRoutes.wearables);

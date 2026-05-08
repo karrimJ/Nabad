@@ -688,7 +688,12 @@ class _ConnectWearableScreenState extends State<ConnectWearableScreen>
       ),
       child: Row(
         children: [
-          const Icon(Icons.watch, size: 28),
+        Image.asset(
+  "assets/images/smartwatch.png",
+  width: 42,
+  height: 42,
+  fit: BoxFit.contain,
+),
           const SizedBox(width: 12),
           Expanded(
             child: Column(
@@ -744,7 +749,12 @@ class _ConnectWearableScreenState extends State<ConnectWearableScreen>
       ),
       child: Row(
         children: [
-          const Icon(Icons.watch, size: 28),
+      Image.asset(
+  "assets/images/smartwatch.png",
+  width: 42,
+  height: 42,
+  fit: BoxFit.contain,
+),
           const SizedBox(width: 12),
           Expanded(
             child: Column(
