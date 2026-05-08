@@ -29,15 +29,24 @@ class VirtualIotReadingSnapshot {
 }
 
 class VirtualIotReadingService {
+  VirtualIotReadingService._internal();
+
+  static final VirtualIotReadingService instance =
+      VirtualIotReadingService._internal();
+
+  factory VirtualIotReadingService() => instance;
+
   final FirebaseFirestore _firestore = FirebaseFirestore.instance;
   final FirebaseAuth _auth = FirebaseAuth.instance;
   final Random _random = Random();
 
   Timer? _timer;
+
   bool _criticalDemoMode = false;
   bool _sosAlreadyTriggeredForCurrentDemo = false;
 
   DateTime? _lastSosTriggeredAt;
+  VirtualIotReadingSnapshot? _lastReading;
 
   final StreamController<VirtualIotReadingSnapshot> _controller =
       StreamController<VirtualIotReadingSnapshot>.broadcast();
@@ -45,6 +54,8 @@ class VirtualIotReadingService {
   Stream<VirtualIotReadingSnapshot> get readingsStream => _controller.stream;
 
   bool get isRunning => _timer != null;
+  bool get isCriticalDemoRunning => _criticalDemoMode;
+  VirtualIotReadingSnapshot? get lastReading => _lastReading;
 
   Future<void> start({bool criticalDemo = false}) async {
     if (_timer != null) return;
@@ -87,6 +98,8 @@ class VirtualIotReadingService {
     final reading = _criticalDemoMode
         ? _generateCriticalReading(now)
         : _generateNormalReading(now);
+
+    _lastReading = reading;
 
     final userRef = _firestore.collection('users').doc(user.uid);
     final batch = _firestore.batch();
@@ -162,13 +175,13 @@ class VirtualIotReadingService {
 
   VirtualIotReadingSnapshot _generateNormalReading(DateTime now) {
     return VirtualIotReadingSnapshot(
-      heartRate: 68 + _random.nextInt(28), // 68 - 95 bpm
-      oxygen: 94 + _random.nextInt(7), // 94 - 100%
+      heartRate: 68 + _random.nextInt(28),
+      oxygen: 94 + _random.nextInt(7),
       temperature: double.parse(
         (36.4 + (_random.nextDouble() * 1.0)).toStringAsFixed(1),
-      ), // 36.4 - 37.4 °C
-      systolic: 112 + _random.nextInt(24), // 112 - 135
-      diastolic: 72 + _random.nextInt(16), // 72 - 87
+      ),
+      systolic: 112 + _random.nextInt(24),
+      diastolic: 72 + _random.nextInt(16),
       recordedAt: now,
       isCritical: false,
     );
@@ -196,7 +209,6 @@ class VirtualIotReadingService {
 
     final now = DateTime.now();
 
-    // Prevent SOS spam if user starts/stops demo many times.
     if (_lastSosTriggeredAt != null &&
         now.difference(_lastSosTriggeredAt!).inSeconds < 60) {
       return;
@@ -233,8 +245,9 @@ class VirtualIotReadingService {
         .add(sosData);
   }
 
-  void dispose() {
-    _timer?.cancel();
-    _controller.close();
-  }
+  // Important:
+  // Do NOT stop the timer here.
+  // Screens call dispose() when you leave the page.
+  // The demo must keep running so Home can keep updating.
+  void dispose() {}
 }
