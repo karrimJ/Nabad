@@ -4,6 +4,7 @@ import 'package:mobile/theme/app_colors.dart';
 import 'package:mobile/theme/app_typography.dart';
 import '../../routes/app_routes.dart';
 import '../../widgets/main_navigation.dart';
+import 'package:mobile/routes/app_routes.dart';
 
 class WearablesScreen extends StatelessWidget {
   const WearablesScreen({super.key});
@@ -117,14 +118,11 @@ class WearablesScreen extends StatelessWidget {
           ),
           const SizedBox(height: 16),
           AuthButton(
-            text: 'Connect Wearable',
-            onPressed: () {
-              Navigator.pushNamed(
-                context,
-                AppRoutes.connectWearable,
-              );
-            },
-          ),
+  text: 'Connect Wearable',
+  onPressed: () {
+    Navigator.pushNamed(context, AppRoutes.connectWearable);
+  },
+),
         ],
       ),
     );
